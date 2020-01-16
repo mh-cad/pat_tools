@@ -1,4 +1,3 @@
-import private
 import ast
 import os
 from dicom2nifti.convert_dicom import dicom_array_to_nifti
