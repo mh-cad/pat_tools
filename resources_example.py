@@ -1,4 +1,4 @@
-from resources import Atlas
+from pattools.resources import Atlas
 import os
 import nibabel as nib
 

@@ -1,6 +1,6 @@
 # You can replace the values in this file and take 'er for a test drive
 
-from pacs import *
+from pattools.pacs import *
 
 # These are the settings for your remote SCP, very important.
 # Depending on your PACS settings you may need to have your local aet registered with your PACS
