@@ -1,5 +1,5 @@
-# pat_tools
-Toolkit for neuro-imaging data manipulation
+# pattools
+Toolkit for neuro-imaging data manipulation and automation.
 
 A collection of handy-dandy tools that Pat uses for neuro-imaging in python.
 
