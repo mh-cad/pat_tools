@@ -1,0 +1,5 @@
+pydicom
+pynetdicom
+dicom2nifti
+requests
+nibabel
