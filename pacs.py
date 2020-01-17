@@ -166,7 +166,6 @@ def cget_series(scp_settings, dataset):
     if assoc.is_established:
         responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
         for (status, identifier) in responses:
-            print(status, identifier)
             if status:
                 # If the status is 'Pending' then identifier is the C-FIND response
                 if status.Status in (0xFF00, 0xFF01):
@@ -176,7 +175,6 @@ def cget_series(scp_settings, dataset):
                 raise TimeoutError('Connection timed out, was aborted or received invalid response')
 
         assoc.release()
-        print('found ', len(dicoms), ' images')
         return dicoms
     else:
         print('Association rejected, aborted or never connected')
@@ -294,16 +292,17 @@ def find_series_from_study(study):
     ds.SeriesNumber = ''
     ds.Modality =''
     ds.SeriesDate=''
+    ds.StudyDate = ''
     ds.SeriesTime=''
     ds.StudyDescription = '*'
     results = cfind(study.scp_settings, ds, query_model='S')
-    seriess = []
+    series = []
     for result in results:
-        series = Series.parse_result(result)
-        series.scp_settings = study.scp_settings
-        if series != None: seriess.append(series)
+        seri = Series.parse_result(result)
+        seri.scp_settings = study.scp_settings
+        if seri != None: series.append(seri)
 
-    return seriess
+    return series
 
 def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '',
     accession_number = '', modalities_in_study = '', study_date = '',
@@ -344,7 +343,7 @@ class ScpSettings:
       if local_aet != None: self.local_aet = local_aet
       else: self.local_aet = ae_title
       # The above is a little sneaky because the remote PACS might not want to
-      # talk to an unknown SCP. But it knows itself, so it will often be happy 
+      # talk to an unknown SCP. But it knows itself, so it will often be happy
       # to dump all its info to someone with the same name.
 
   def __str__(self):
@@ -457,7 +456,6 @@ class Study:
     def get_report(self):
         series = self.find_series()
         for seri in [s for s in series if s.modality == 'SR']:
-            print('Modality ', seri.modality)
             if seri.modality == 'SR':
                 ds = Dataset()
                 ds.SeriesInstanceUID = seri.series_uid
@@ -502,6 +500,7 @@ class Series:
     modality = None
     series_number = None
     description = None
+    study_date = None
     scp_settings = None
 
     def __init__(self, scp_settings=None):
@@ -514,6 +513,7 @@ class Series:
             'modality     : ' + str(self.modality) + '\n' +
             'series_number: ' + str(self.series_number) + '\n' +
             'description  : ' + str(self.description)+ '\n' +
+            'study_date  : ' + str(self.study_date)+ '\n' +
             'scp_settings : ' + str(self.scp_settings))
 
     def save_dicom(self, dir_path):
@@ -552,16 +552,14 @@ class Series:
                 series.series_uid = field.split()[-1].strip("'").strip('"')
             elif field.startswith('(0008, 0060)'):
                 series.modality = field.split()[-1].strip("'").strip('"')
-            elif field.startswith('(0008, 0021)'):
-                series.series_date = field.split(': ')[-1].strip("'").strip('"')
-            elif field.startswith('(0008, 0031)'):
-                series.series_time = field.split(': ')[-1].strip("'").strip('"')
             elif field.startswith('(0020, 0011)'):
                 series.series_number = field.split(': ')[-1].strip("'").strip('"')
             elif field.startswith('(0008, 103e)'):
                 series.description = field.split()[-1].strip("'").strip('"')
             elif field.startswith('(0020, 000d)'):
                 series.study_uid = field.split()[-1].strip("'").strip('"')
+            elif field.startswith('(0008, 0020)'):
+                series.study_date = field.split(': ')[-1].strip("'").strip('"')
         return series
 
 class Report(Series):
