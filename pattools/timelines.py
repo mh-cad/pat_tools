@@ -141,14 +141,11 @@ class Timeline:
 
         # Try to load from path...
         if (os.path.isfile(os.path.join(path,'timeline.metadata'))):
-            self.load(path)
+            self.load()
 
         # If that doesn't work, try to create from PACS
         if not os.path.exists(path): os.makedirs(path)
         self.save()
-
-    #def _load_from_path(self):
-
 
     def update_from_pacs(self, scp_settings):
         if scp_settings == None: return
@@ -242,4 +239,5 @@ class Timeline:
                         raise Exception('Failed to read ' + os.path.join(self.path, studydate, f))
 
     def process(self):
-        dates = next(os.walk(self.path))[1]
+        from pattools import fsl
+        from pattools import ants
