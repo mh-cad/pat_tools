@@ -11,3 +11,6 @@ Used for building longitudinal data sets
 
 ## resources
 Quick access to useful resources
+
+## ants, fsl
+Thin wrappers for quick access to underlying calls to ANTS and FSL. You'll need to have those tools installed if you want to use them (or make calls that use that code), otherwise we'll complain.
