@@ -171,13 +171,11 @@ def cget_series(scp_settings, dataset):
                 if status.Status in (0xFF00, 0xFF01):
                     result.append(str(identifier))
             else:
-                print('Connection timed out, was aborted or received invalid response')
                 raise TimeoutError('Connection timed out, was aborted or received invalid response')
 
         assoc.release()
         return dicoms
     else:
-        print('Association rejected, aborted or never connected')
         raise ConnectionError('Association rejected, aborted or never connected')
 
 def cget_report(scp_settings, dataset):
@@ -214,14 +212,12 @@ def cget_report(scp_settings, dataset):
                 if status.Status in (0xFF00, 0xFF01):
                     result.append(str(identifier))
             else:
-                print('Connection timed out, was aborted or received invalid response')
                 raise TimeoutError('Connection timed out, was aborted or received invalid response')
 
         assoc.release()
         return reportds
 
     else:
-        print('Association rejected, aborted or never connected')
         raise ConnectionError('Association rejected, aborted or never connected')
 
 def cfind(scp_settings, dataset, query_model='P'):
@@ -245,7 +241,6 @@ def cfind(scp_settings, dataset, query_model='P'):
                  if status.Status in (0xFF00, 0xFF01):
                      result.append(str(identifier))
              else:
-                 print('Connection timed out, was aborted or received invalid response ', scp_settings.ae_title)
                  assoc.release()
                  raise TimeoutError('Connection timed out, was aborted or received invalid response ' + scp_settings.ae_title)
 
@@ -253,7 +248,6 @@ def cfind(scp_settings, dataset, query_model='P'):
          assoc.release()
          return result
     else:
-        print('Association rejected, aborted or never connected ' + scp_settings.ae_title)
         raise ConnectionError('Association rejected, aborted or never connected ' + scp_settings.ae_title)
 
 def find_studies_from_patient(patient):
@@ -527,14 +521,22 @@ class Series:
              dicom.save_as(os.path.join(dir_path, dicom.SOPInstanceUID +'.dcm'), write_like_original=False)
         return True
 
-    def save_nifti(self, file_path):
+    def save_nifti(self, file_path, max_attempts=3):
         if not os.path.exists(os.path.dirname(file_path)):
             os.mkdir(os.path.dirname(file_path))
         ds = Dataset()
         ds.SeriesInstanceUID = self.series_uid
         ds.StudyInstanceUID = self.study_uid
         ds.QueryRetrieveLevel = 'SERIES'
-        dicoms = cget_series(self.scp_settings, ds)
+        dicoms = None
+        attempts = 0
+        while dicoms == None and attempts < max_attempts:
+            attempts += 1
+            try:
+                dicoms = cget_series(self.scp_settings, ds)
+            except:
+                if attempts >= max_attempts:
+                    raise
 
         try:
             dicom_array_to_nifti(dicoms, file_path, reorient_nifti=True)
@@ -555,7 +557,7 @@ class Series:
             elif field.startswith('(0020, 0011)'):
                 series.series_number = field.split(': ')[-1].strip("'").strip('"')
             elif field.startswith('(0008, 103e)'):
-                series.description = field.split()[-1].strip("'").strip('"')
+                series.description = field.split(': ')[-1].strip("'").strip('"')
             elif field.startswith('(0020, 000d)'):
                 series.study_uid = field.split()[-1].strip("'").strip('"')
             elif field.startswith('(0008, 0020)'):
