@@ -307,8 +307,7 @@ def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '
     ds.StudyInstanceUID = study_uid
     ds.AccessionNumber = accession_number
     ds.QueryRetrieveLevel = 'STUDY'
-    ds.ModalitiesInStudy = ''
-    ds.SOPClassesInStudy = str(modalities_in_study)
+    ds.ModalitiesInStudy = str(modalities_in_study)
     ds.StudyDescription = description
     ds.SeriesInStudy=''
     ds.StudyDate=study_date
