@@ -296,7 +296,6 @@ class Timeline:
             affine_mat = out_path + '_0GenericAffine.mat'
 
             shutil.copyfile(affine_mat, os.path.join(self.path, 'atlas2ref.mat'))
-            print(next(os.walk(tmp_dir)))
             out_path = os.path.join(self.path, 'brain_mask.nii.gz')
             ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
             # Save metadata
