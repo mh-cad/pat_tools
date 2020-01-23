@@ -263,13 +263,15 @@ class Timeline:
             return
         # For now we're just going to go with the biggest image as a proxy for high res
         largest_file = (None, -1)
+        candidates = []
         for dir, _, files in os.walk(self.path):
             for f in files:
                 if (f.endswith('.nii') or f.endswith('.nii.gz')) and f+'.metadata' in files:
-                    path = os.path.join(dir, f)
-                    candidate = (path, os.stat(path).st_size)
-                    if largest_file[0] == None or candidate[1] > largest_file[1]:
-                        largest_file = candidate
+                    candidates.append(os.path.join(dir, f))
+        candidates.sort(key=lambda c : os.stat(c).st_size)
+        if len(candidates) == 0: return
+        candidate = candidates[int(len(candidates)/3*2)]
+        print('candidate:', candidate)
 
         with TemporaryDirectory() as tmp_dir:
             #Open atlas
@@ -288,7 +290,7 @@ class Timeline:
             print('        N4 Bias correction for reference image...')
             n4_path = os.path.join(self.path, 'registration_reference.nii.gz')
             out_path = os.path.join(tmp_dir, 'waped.nii.gz')
-            ants.n4_bias_correct(largest_file[0], n4_path).wait()
+            ants.n4_bias_correct(candidate, n4_path).wait()
 
             print('        Registering reference image to brain mask...')
             ants.affine_registration(t2_path, n4_path, out_path).wait()
@@ -318,8 +320,9 @@ class Timeline:
 
             mask = nib.load(os.path.join(self.path, self.brain_mask))
             output = nib.load(out_path)
+            outdata = output.get_fdata()
             if apply_mask:
-                outdata = output.get_fdata() * mask.get_fdata()
+                outdata *= mask.get_fdata()
             output = nib.Nifti1Image(outdata, output.affine, output.header)
             nib.save(output, output_path)
 
@@ -334,7 +337,7 @@ class Timeline:
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
             for filter in self.datamap[study]:
-                if not os.path.exists(os.path.join(filter.processed_file)):
+                if not os.path.exists(os.path.join(study_path,filter.processed_file)):
                     input = os.path.join(self.path, study, filter.file)
                     output = os.path.join(self.path, study, filter.processed_file)
                     files_to_process.append((input, output))
