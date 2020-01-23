@@ -1,8 +1,16 @@
 from pattools.pacs import Series, Patient
+from pattools.resources import Atlas
+import nibabel as nib
 import multiprocessing
 import json
 import os
+import shutil
+from clint.textui import progress
+from tempfile import TemporaryDirectory
 
+
+def affine_registration(input):
+    pass
 class ScorecardElement:
     description = None
     points = 0
@@ -31,11 +39,10 @@ class Filter:
             for se in self.scorecard:
                 if se.description.lower() in seri.description.lower():
                     score += se.points #... add to the score
-
             if score >= self.threshold:
                 candidates.append((score, seri))
         # Sort the candidates by score
-        candidates.sort(key=lambda x: x[0], reverse=False)
+        candidates.sort(key=lambda x: x[0], reverse=True)
         # If theres a candidate, append the best
         if len(candidates) > 0:
             return candidates[0][1]
@@ -55,6 +62,9 @@ def flair_filter():
     filter.scorecard.append(ScorecardElement('t2', 45))
     filter.scorecard.append(ScorecardElement('t1', -45))
     filter.scorecard.append(ScorecardElement('3d', 25))
+    filter.scorecard.append(ScorecardElement('dis3d', -25))
+    filter.scorecard.append(ScorecardElement('report', -50))
+    filter.scorecard.append(ScorecardElement('fused', -35))
     filter.threshold = 100
     return filter
 
@@ -70,7 +80,10 @@ def mprage_filter():
     filter.scorecard.append(ScorecardElement('t1', 30))
     filter.scorecard.append(ScorecardElement('t2', -30))
     filter.scorecard.append(ScorecardElement('3d', 25))
+    filter.scorecard.append(ScorecardElement('dis3d', -25))
     filter.scorecard.append(ScorecardElement('c+', -5))
+    filter.scorecard.append(ScorecardElement('report', -50))
+    filter.scorecard.append(ScorecardElement('fused', -35))
     filter.threshold = 100
     return filter
 
@@ -238,6 +251,96 @@ class Timeline:
                     except:
                         raise Exception('Failed to read ' + os.path.join(self.path, studydate, f))
 
-    def process(self):
-        from pattools import fsl
+
+    def setup_registration_reference(self):
         from pattools import ants
+        print('Setting up registration reference...')
+        # Check that we don't already have one
+        if (self.registration_reference != None
+            and os.path.exists(os.path.join(self.path,self.registration_reference))
+            and self.brain_mask != None
+            and os.path.exists(os.path.join(self.path,self.brain_mask))):
+            return
+        # For now we're just going to go with the biggest image as a proxy for high res
+        largest_file = (None, -1)
+        for dir, _, files in os.walk(self.path):
+            for f in files:
+                if (f.endswith('.nii') or f.endswith('.nii.gz')) and f+'.metadata' in files:
+                    path = os.path.join(dir, f)
+                    candidate = (path, os.stat(path).st_size)
+                    if largest_file[0] == None or candidate[1] > largest_file[1]:
+                        largest_file = candidate
+
+        with TemporaryDirectory() as tmp_dir:
+            #Open atlas
+            atlas_path = '/data/atlas/mni'
+            if not os.path.exists(atlas_path): os.makedirs(atlas_path)
+            atlas = Atlas.MNI.load(atlas_path)
+
+            # save atlas to tmp_dir and mask to timeline
+            t2_path = os.path.join(tmp_dir, 't2.nii.gz')
+            mask_path = os.path.join(tmp_dir, 'mask.nii.gz')
+
+            nib.save(atlas.t2, t2_path)
+            nib.save(atlas.mask, mask_path)
+
+            # Bias correction and registration
+            print('        N4 Bias correction for reference image...')
+            n4_path = os.path.join(self.path, 'registration_reference.nii.gz')
+            out_path = os.path.join(tmp_dir, 'waped.nii.gz')
+            ants.n4_bias_correct(largest_file[0], n4_path).wait()
+
+            print('        Registering reference image to brain mask...')
+            ants.affine_registration(t2_path, n4_path, out_path).wait()
+            # Register mask to reference scan
+            affine_mat = out_path + '_0GenericAffine.mat'
+
+            shutil.copyfile(affine_mat, os.path.join(self.path, 'atlas2ref.mat'))
+            print(next(os.walk(tmp_dir)))
+            out_path = os.path.join(self.path, 'brain_mask.nii.gz')
+            ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
+            # Save metadata
+            self.registration_reference = 'registration_reference.nii.gz'
+            self.brain_mask = 'brain_mask.nii.gz'
+            self.save()
+            print('done.')
+
+    def process_file(self, input_path, output_path, apply_mask=False):
+        # These imports can complain on import, so we'll only get them now.
+        from pattools import ants
+        with TemporaryDirectory() as tmp_dir:
+            input = nib.load(input_path)
+            n4_path = os.path.join(tmp_dir, 'n4.nii')
+            ants.n4_bias_correct(input_path, n4_path).wait()
+
+            ref_path = os.path.join(self.path, self.registration_reference)
+            out_path = os.path.join(tmp_dir, 'regout.nii')
+            ants.affine_registration(n4_path, ref_path, out_path).wait()
+
+            mask = nib.load(os.path.join(self.path, self.brain_mask))
+            output = nib.load(out_path)
+            if apply_mask:
+                outdata = output.get_fdata() * mask.get_fdata()
+            output = nib.Nifti1Image(outdata, output.affine, output.header)
+            nib.save(output, output_path)
+
+    def process(self):
+        if (self.registration_reference == None
+            or os.path.exists(os.path.join(self.path, self.registration_reference)) == False
+            or self.brain_mask == None
+            or os.path.exists(os.path.join(self.path, self.brain_mask)) == False):
+            self.setup_registration_reference()
+
+        files_to_process = []
+        for study in self.datamap:
+            study_path = os.path.join(self.path, study)
+            for filter in self.datamap[study]:
+                if not os.path.exists(os.path.join(filter.processed_file)):
+                    input = os.path.join(self.path, study, filter.file)
+                    output = os.path.join(self.path, study, filter.processed_file)
+                    files_to_process.append((input, output))
+        # Add a progress bar
+        print('Processing', len(files_to_process), 'files...')
+        files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
+        for input, output in files_to_process:
+            self.process_file(input, output)

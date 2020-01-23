@@ -34,7 +34,6 @@ class Atlas:
             t2_path = None
             mask_path = None
 
-            print(target_dir, 'mni_icbm152_t1_tal_nlin_asym_09c.nii')
             # Try to find T1 file
             if os.path.isfile(os.path.join(target_dir, 'mni_icbm152_t1_tal_nlin_asym_09c.nii')):
                 t1_path = os.path.join(target_dir, 'mni_icbm152_t1_tal_nlin_asym_09c.nii')

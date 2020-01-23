@@ -521,7 +521,7 @@ class Series:
         return True
 
     def save_nifti(self, file_path, max_attempts=3):
-        if not os.path.exists(os.path.dirname(file_path)):
+        if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != '':
             os.mkdir(os.path.dirname(file_path))
         ds = Dataset()
         ds.SeriesInstanceUID = self.series_uid
