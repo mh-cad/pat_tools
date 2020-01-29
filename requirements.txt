@@ -5,3 +5,5 @@ requests
 nibabel
 clint
 setuptools
+imageio
+joblib

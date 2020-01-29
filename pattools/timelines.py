@@ -1,12 +1,16 @@
 from pattools.pacs import Series, Patient
 from pattools.resources import Atlas
 import nibabel as nib
+import numpy as np
 import multiprocessing
+from joblib import Parallel, delayed
 import json
 import os
 import shutil
 from clint.textui import progress
 from tempfile import TemporaryDirectory
+from datetime import date, timedelta
+import imageio
 
 
 def affine_registration(input):
@@ -109,11 +113,11 @@ class FileMetadata:
     def __str__(self):
         return (
             'file              : ' + str(self.study_uid) +os.linesep+
-            'processed_file    : ' + str(self.study_uid) +os.linesep+
-            'filter_name       : ' + str(self.study_uid) +os.linesep+
+            'processed_file    : ' + str(self.processed_file) +os.linesep+
+            'filter_name       : ' + str(self.filter_name) +os.linesep+
             'study_uid         : ' + str(self.study_uid) +os.linesep+
             'series_uid        : ' + str(self.series_uid) +os.linesep+
-            'series_description: ' + str(self.series_uid))
+            'series_description: ' + str(self.series_description))
 
     @staticmethod
     def from_string(string):
@@ -346,3 +350,141 @@ class Timeline:
         files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
         for input, output in files_to_process:
             self.process_file(input, output)
+
+ #############################
+######## INTERPOLATORS ########
+ #############################
+
+class _AbstractInterpolator:
+
+    def interpolate(self, data1, data2, ratio):
+        raise Exception("This is the base interpolator class. Use an implementation")
+
+    @staticmethod
+    def _date_from_path(path):
+        datestring = os.path.basename(os.path.dirname(path))
+        return date(int(datestring[0:4]), int(datestring[4:6]), int(datestring[6:]))
+
+    def interpolated_data(self, image_paths, mask_path, delta_days=28):
+        # We only want to yield data2 on the final pair, so we'll need a reference
+        data2 = None
+        date2 = None
+        for p1, p2 in zip(image_paths[:-1], image_paths[1:]):
+            # Do some error checking...
+            if not os.path.exists(p1):
+                raise Exception('Path ' + p1 + ' does not exist')
+            if not os.path.exists(p2):
+                raise Exception('Path ' + p2 + ' does not exist')
+            if mask_path != None and os.path.exists(mask_path) == False:
+                raise Exception('Path ' + mask_path + ' does not exist')
+
+            # Open the nifti file
+            p1img = nib.load(p1)
+            p2img = nib.load(p2)
+            # Get the data
+            data1 = p1img.get_fdata()
+            data2 = p2img.get_fdata()
+
+            if (mask_path != None):
+                mask_img = nib.load(mask_path)
+                mask_data = mask_img.get_fdata()
+                data1 *= mask_data
+                data2 *= mask_data
+
+            # If each delta represents a step, we calculate how many steps there
+            # are between the current scans
+            date1 = _AbstractInterpolator._date_from_path(p1)
+            date2 = _AbstractInterpolator._date_from_path(p2)
+            window = (date2 - date1)
+            steps = int(window.days / delta_days)
+
+            for i in range(0, steps):
+                ratio = i/steps
+                # Yield interpolated (includes data1, since the ratio range is [0,1)
+                yield (date1 + timedelta(days=int(i * delta_days)), self.interpolate(data1, data2, ratio))
+        # Yield the last series
+        yield (date2, data2)
+
+class LinearInterpolator(_AbstractInterpolator):
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        return data1 * (1-ratio) + data2 * ratio
+
+class NearestNeighbourInterpolator(_AbstractInterpolator):
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        if ratio >= 0.5: return data2
+        return data1
+
+ #########################
+######## Renderers ########
+ #########################
+
+class Renderer:
+    interpolator = None
+    days_delta = None
+
+    def __init__(self, interpolator=LinearInterpolator(), days_delta=28):
+        self.interpolator = interpolator
+        self.days_delta = days_delta
+
+    def render(self, timeline, path):
+        filters = [filter.name for filter in timeline.filters]
+        for filter in filters:
+            files = []
+            for studydate in timeline.datamap:
+                files.extend([
+                    os.path.join(timeline.path, studydate, f.processed_file)
+                    for f in timeline.datamap[studydate]
+                    if f.filter_name == filter])
+
+            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+
+    @staticmethod
+    def write_images(data, folder, slice_type, min_val, max_val):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        data_cp = np.copy(data)
+        count = 0
+        if slice_type == 'sag':
+            count = data.shape[0]
+            for i in range(data.shape[0]):
+                Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f'{i}.png'), min_val, max_val)
+
+        elif slice_type == 'cor':
+            count = data.shape[1]
+            for j in range(data.shape[1]):
+                Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f'{j}.png'), min_val, max_val)
+
+        elif slice_type == 'ax':
+            count = data.shape[2]
+            for k in range(data.shape[2]):
+                Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f'{k}.png'), min_val, max_val)
+
+        return count
+
+    @staticmethod
+    def write_image(slice, location, min, max):
+        # This is a bit of a hack to make sure the range is normal
+        slice[0,0] = max
+        slice[0,1] = min
+        output = np.flip(slice.T).copy()
+        np.clip(output, min, max)
+        imageio.imwrite(location, output)
+
+    @staticmethod
+    def _render_volume(date, volume, path):
+        min_val = np.amin(volume)
+        max_val = np.amax(volume)
+        Renderer.write_images(volume, os.path.join(path, 'sag', date.strftime('%Y%m%d')), 'sag', min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, 'cor', date.strftime('%Y%m%d')), 'cor', min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, 'ax', date.strftime('%Y%m%d')), 'ax', min_val, max_val)
+
+    def render_all(self, files, mask_path, path):
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path)
+            for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))

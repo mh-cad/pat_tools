@@ -19,7 +19,9 @@ setuptools.setup(
           'dicom2nifti',
           'requests',
           'nibabel',
-          'clint'
+          'clint',
+          'imageio',
+          'joblib'
       ],
     classifiers=[
         "Programming Language :: Python :: 3",
