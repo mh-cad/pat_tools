@@ -1,0 +1,1891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.4" />
+<title>pattools.pacs API documentation</title>
+<meta name="description" content="The PACs module contains classes that enable simple, patient-based access to PACS data." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pattools.pacs</code></h1>
+</header>
+<section id="section-intro">
+<p>The PACs module contains classes that enable simple, patient-based access to PACS data.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;The PACs module contains classes that enable simple, patient-based access to PACS data.&#39;&#39;&#39;
+
+import ast
+import os
+from dicom2nifti.convert_dicom import dicom_array_to_nifti
+from socket import gethostname
+from pydicom.dataset import Dataset
+from pynetdicom import (
+    AE, evt, build_role,
+    PYNETDICOM_IMPLEMENTATION_UID,
+    PYNETDICOM_IMPLEMENTATION_VERSION)
+from pynetdicom.sop_class import (
+    PatientRootQueryRetrieveInformationModelFind,
+    StudyRootQueryRetrieveInformationModelFind,
+    StudyRootQueryRetrieveInformationModelGet,
+    # Storage classes
+    ComputedRadiographyImageStorage,
+    DigitalXRayImagePresentationStorage,
+    DigitalXRayImageProcessingStorage,
+    DigitalMammographyXRayImagePresentationStorage,
+    DigitalMammographyXRayImageProcessingStorage,
+    CTImageStorage,
+    EnhancedCTImageStorage,
+    LegacyConvertedEnhancedCTImageStorage,
+    UltrasoundMultiframeImageStorage,
+    MRImageStorage,
+    EnhancedMRImageStorage,
+    MRSpectroscopyStorage,
+    EnhancedMRColorImageStorage,
+    LegacyConvertedEnhancedMRImageStorage,
+    UltrasoundImageStorage,
+    GrayscaleSoftcopyPresentationStateStorage,
+    ColorSoftcopyPresentationStateStorage,
+    PseudocolorSoftcopyPresentationStageStorage,
+    BlendingSoftcopyPresentationStateStorage,
+    XAXRFGrayscaleSoftcopyPresentationStateStorage,
+    GrayscalePlanarMPRVolumetricPresentationStateStorage,
+    CompositingPlanarMPRVolumetricPresentationStateStorage,
+    VolumeRenderingVolumetricPresentationStateStorage,
+    SegmentedVolumeRenderingVolumetricPresentationStateStorage,
+    MultipleVolumeRenderingVolumetricPresentationStateStorage,
+    XRayAngiographicImageStorage,
+    EnhancedXAImageStorage,
+    XRayRadiofluoroscopicImageStorage,
+    EnhancedXRFImageStorage,
+    XRay3DAngiographicImageStorage,
+    XRay3DCraniofacialImageStorage,
+    BreastTomosynthesisImageStorage,
+    BreastProjectionXRayImagePresentationStorage,
+    BreastProjectionXRayImageProcessingStorage,
+    IntravascularOpticalCoherenceTomographyImagePresentationStorage,
+    IntravascularOpticalCoherenceTomographyImageProcessingStorage,
+    NuclearMedicineImageStorage,
+    ParametricMapStorage,
+    RawDataStorage,
+    SpatialRegistrationStorage,
+    SpatialFiducialsStorage,
+    DeformableSpatialRegistrationStorage,
+    SegmentationStorage,
+    SurfaceSegmentationStorage,
+    TractographyResultsStorage,
+    RealWorldValueMappingStorage,
+    SurfaceScanMeshStorage,
+    SurfaceScanPointCloudStorage,
+    VLEndoscopicImageStorage,
+    VideoEndoscopicImageStorage,
+    VLMicroscopicImageStorage,
+    VideoMicroscopicImageStorage,
+    VLSlideCoordinatesMicroscopicImageStorage,
+    VLPhotographicImageStorage,
+    VideoPhotographicImageStorage,
+    OphthalmicPhotography8BitImageStorage,
+    OphthalmicPhotography16BitImageStorage,
+    StereometricRelationshipStorage,
+    OphthalmicTomographyImageStorage,
+    WideFieldOphthalmicPhotographyStereographicProjectionImageStorage,
+    WideFieldOphthalmicPhotography3DCoordinatesImageStorage,
+    OphthalmicOpticalCoherenceTomographyEnFaceImageStorage,
+    OphthlamicOpticalCoherenceTomographyBScanVolumeAnalysisStorage,
+    VLWholeSlideMicroscopyImageStorage,
+    LensometryMeasurementsStorage,
+    AutorefractionMeasurementsStorage,
+    KeratometryMeasurementsStorage,
+    SubjectiveRefractionMeasurementsStorage,
+    VisualAcuityMeasurementsStorage,
+    SpectaclePrescriptionReportStorage,
+    OphthalmicAxialMeasurementsStorage,
+    IntraocularLensCalculationsStorage,
+    MacularGridThicknessAndVolumeReport,
+    OphthalmicVisualFieldStaticPerimetryMeasurementsStorage,
+    OphthalmicThicknessMapStorage,
+    CornealTopographyMapStorage,
+    BasicTextSRStorage,
+    EnhancedSRStorage,
+    ComprehensiveSRStorage,
+    Comprehensive3DSRStorage,
+    ExtensibleSRStorage,
+    ProcedureSRStorage,
+    MammographyCADSRStorage,
+    KeyObjectSelectionStorage,
+    ChestCADSRStorage,
+    XRayRadiationDoseSRStorage,
+    RadiopharmaceuticalRadiationDoseSRStorage,
+    ColonCADSRStorage,
+    ImplantationPlanSRDocumentStorage,
+    AcquisitionContextSRStorage,
+    SimplifiedAdultEchoSRStorage,
+    PositronEmissionTomographyImageStorage,
+    EnhancedPETImageStorage,
+    LegacyConvertedEnhancedPETImageStorage,
+    BasicStructuredDisplayStorage,
+    RTImageStorage
+    )
+
+
+def cget_series(scp_settings, dataset):
+    &#39;&#39;&#39;Runs a series level CGET request&#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    # Add the requested presentation contexts (QR SCU)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
+    # Add the requested presentation context (Storage SCP)
+    ae.add_requested_context(CTImageStorage)
+    ae.add_requested_context(EnhancedCTImageStorage)
+    ae.add_requested_context(MRImageStorage)
+    ae.add_requested_context(MRSpectroscopyStorage)
+    ae.add_requested_context(EnhancedMRColorImageStorage)
+    # Note, we can add to these if we want other types of image (see massive import statement)
+
+    # Create an SCP/SCU Role Selection Negotiation item for Image Storage
+    roles = []
+    roles.append(build_role(CTImageStorage, scp_role=True))
+    roles.append(build_role(EnhancedCTImageStorage, scp_role=True))
+    roles.append(build_role(MRImageStorage, scp_role=True))
+    roles.append(build_role(MRSpectroscopyStorage, scp_role=True))
+    roles.append(build_role(EnhancedMRColorImageStorage, scp_role=True))
+
+    dicoms = []
+    def handle_store_series(e):
+        nonlocal dicoms
+
+        ds = e.dataset
+        context = e.context
+        meta = Dataset()
+        # Add the DICOM File Meta Information
+        meta = Dataset()
+        meta.MediaStorageSOPClassUID = ds.SOPClassUID
+        meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
+        meta.ImplementationClassUID = PYNETDICOM_IMPLEMENTATION_UID
+        meta.ImplementationVersionName = PYNETDICOM_IMPLEMENTATION_VERSION
+        meta.TransferSyntaxUID = context.transfer_syntax
+
+        # Add the file meta to the dataset
+        ds.file_meta = meta
+
+        # Set the transfer syntax attributes of the dataset
+        ds.is_little_endian = context.transfer_syntax.is_little_endian
+        ds.is_implicit_VR = context.transfer_syntax.is_implicit_VR
+
+        dicoms.append(ds)
+
+        return 0x0000
+    handlers = [(evt.EVT_C_STORE, handle_store_series)]
+
+    # Associate with peer AE
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port,
+        ae_title=scp_settings.ae_title, ext_neg=roles, evt_handlers=handlers)
+
+    if assoc.is_established:
+        responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
+        for (status, identifier) in responses:
+            if status:
+                # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                if status.Status in (0xFF00, 0xFF01):
+                    result.append(str(identifier))
+            else:
+                raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response&#39;)
+
+        assoc.release()
+        return dicoms
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected&#39;)
+
+def cget_report(scp_settings, dataset):
+    &#39;&#39;&#39;Runs a CGET request for a report&#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    # Add the requested presentation contexts (QR SCU)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
+    # Add the requested presentation context (Storage SCP)
+    ae.add_requested_context(BasicTextSRStorage)
+    ae.add_requested_context(EnhancedSRStorage)
+
+    # Create an SCP/SCU Role Selection Negotiation item for CT Image Storage
+    roles = []
+    roles.append(build_role(BasicTextSRStorage, scp_role=True))
+    roles.append(build_role(EnhancedSRStorage, scp_role=True))
+
+    reportds = None
+    def handle_store_report(e):
+        nonlocal reportds
+        reportds = e.dataset
+        return  0x0000
+
+    handlers = [(evt.EVT_C_STORE, handle_store_report)]
+
+    # Associate with peer AE
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port,
+        ae_title=scp_settings.ae_title, ext_neg=roles, evt_handlers=handlers)
+
+    if assoc.is_established:
+        responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
+        for (status, identifier) in responses:
+            if status:
+                # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                if status.Status in (0xFF00, 0xFF01):
+                    result.append(str(identifier))
+            else:
+                raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response&#39;)
+
+        assoc.release()
+        return reportds
+
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected&#39;)
+
+def cfind(scp_settings, dataset, query_model=&#39;P&#39;):
+    &#39;&#39;&#39; Make a CFIND request &#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelFind)
+    ae.add_requested_context(PatientRootQueryRetrieveInformationModelFind)
+    ae.add_requested_context(&#39;1.2.840.10008.5.1.4.1.1.88.11&#39;)
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port, ae_title=scp_settings.ae_title)
+
+    #Check for successful association
+    if assoc.is_established:
+         # Use the C-FIND service to send the identifier
+         responses = assoc.send_c_find(dataset, query_model=query_model)
+
+         result = []
+         for (status, identifier) in responses:
+             if status:
+                 # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                 if status.Status in (0xFF00, 0xFF01):
+                     result.append(str(identifier))
+             else:
+                 assoc.release()
+                 raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response &#39; + scp_settings.ae_title)
+
+         # Release the association
+         assoc.release()
+         return result
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected &#39; + scp_settings.ae_title)
+
+def find_studies_from_patient(patient):
+    &#39;&#39;&#39;Runs a CFIND for all studies for a given patient&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = patient.id
+    ds.PatientName = patient.name
+    ds.StudyInstanceUID = &#39;&#39;
+    ds.AccessionNumber = &#39;&#39;
+    ds.QueryRetrieveLevel = &#39;STUDY&#39;
+    ds.SeriesUID=&#39;&#39;
+    ds.PatientSize = &#39;&#39;
+    ds.ModalitiesInStudy = &#39;&#39;
+    ds.SOPClassesInStudy = &#39;&#39;
+    ds.StudyDescription = &#39;*&#39;
+    ds.FailedSOPSequence = &#39;&#39;
+    ds.DerivationCodeSequence =&#39;&#39;
+    ds.SeriesInStudy=&#39;&#39;
+    ds.StudyDate=&#39;&#39;
+    ds.StudyTime=&#39;&#39;
+    results = cfind(patient.scp_settings, ds)
+    studies = []
+    for result in results:
+        study = Study.parse_result(result)
+        study.scp_settings = patient.scp_settings
+        if study != None: studies.append(study)
+
+    return studies
+
+def find_series_from_study(study):
+    &#39;&#39;&#39;CFINDS all series for a given study&#39;&#39;&#39;
+    ds = Dataset()
+    ds.StudyInstanceUID = study.study_uid
+    ds.AccessionNumber = &#39;&#39;
+    ds.QueryRetrieveLevel = &#39;SERIES&#39;
+    ds.SeriesInstanceUID=&#39;&#39;
+    ds.SeriesDescription = &#39;&#39;
+    ds.SeriesNumber = &#39;&#39;
+    ds.Modality =&#39;&#39;
+    ds.SeriesDate=&#39;&#39;
+    ds.StudyDate = &#39;&#39;
+    ds.SeriesTime=&#39;&#39;
+    ds.StudyDescription = &#39;*&#39;
+    results = cfind(study.scp_settings, ds, query_model=&#39;S&#39;)
+    series = []
+    for result in results:
+        seri = Series.parse_result(result)
+        seri.scp_settings = study.scp_settings
+        if seri != None: series.append(seri)
+
+    return series
+
+def find_studies(scp_settings, patient_name = &#39;&#39;, patient_id = &#39;&#39; ,study_uid = &#39;&#39;,
+    accession_number = &#39;&#39;, modalities_in_study = &#39;&#39;, study_date = &#39;&#39;,
+    study_time = &#39;&#39;, description = &#39;&#39;):
+    &#39;&#39;&#39;Run a study level CFIND requests using the supplied parameters&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = patient_id
+    ds.PatientName = patient_name
+    ds.StudyInstanceUID = study_uid
+    ds.AccessionNumber = accession_number
+    ds.QueryRetrieveLevel = &#39;STUDY&#39;
+    ds.ModalitiesInStudy = str(modalities_in_study)
+    ds.StudyDescription = description
+    ds.SeriesInStudy=&#39;&#39;
+    ds.StudyDate=study_date
+    ds.StudyTime=study_time
+
+    results = cfind(scp_settings, ds)
+    studies = []
+    for result in results:
+        study = Study.parse_result(result)
+        study.scp_settings = patient.scp_settings
+        if study != None: studies.append(study)
+
+    return studies
+
+### ScpSettings class
+class ScpSettings:
+  &#39;&#39;&#39;A class representing SCP settings (i.e. how to connect to PACS)&#39;&#39;&#39;
+  ae_title = None
+  host = None
+  port = None
+  local_aet = None
+
+  def __init__(self, ae_title, host, port, local_aet=None):
+      self.ae_title = ae_title
+      self.host = host
+      self.port = port
+      if local_aet != None: self.local_aet = local_aet
+      else: self.local_aet = ae_title
+      # The above is a little sneaky because the remote PACS might not want to
+      # talk to an unknown SCP. But it knows itself, so it will often be happy
+      # to dump all its info to someone with the same name.
+
+  def __str__(self):
+      return (
+        &#39;ae_title[&#39; + str(self.ae_title) +
+        &#39;], host[&#39; + str(self.host) +
+        &#39;], port[&#39; + str(self.port) + &#39;]&#39;
+      )
+
+### Patient class
+class Patient:
+    &#39;&#39;&#39; Contains the details for a single patient &#39;&#39;&#39;
+    id = None
+    name = &#39;&#39;
+    dob = &#39;&#39;
+    patient_sex = &#39;&#39;
+    scp_settings = None
+
+    def __init__(self, id=None, scp_settings=None):
+        &#39;&#39;&#39; Requires an id string and the scp_settings of the remote PACs scp &#39;&#39;&#39;
+        self.id = id
+        self.scp_settings = scp_settings
+        if id != None and scp_settings !=None:
+            patient = Patient.from_id(id, scp_settings)
+            self.name = patient.name
+            self.dob = patient.dob
+            self.patient_sex = patient.patient_sex
+
+    def __str__(self):
+        return (
+            &#39;id          : &#39; + str(self.id) + &#39;\n&#39; +
+            &#39;name        : &#39; + str(self.name) + &#39;\n&#39; +
+            &#39;dob         : &#39; + str(self.dob) + &#39;\n&#39; +
+            &#39;patient_sex : &#39; + str(self.patient_sex) + &#39;\n&#39; +
+            &#39;scp_settings: &#39; + str(self.scp_settings))
+
+    def find_studies(self):
+        &#39;&#39;&#39; Find all remote studies for the patient &#39;&#39;&#39;
+        return find_studies_from_patient(self)
+
+    @staticmethod
+    def from_id(id, scp_settings):
+        &#39;&#39;&#39;Returns a patient from a given patient id&#39;&#39;&#39;
+        ds = Dataset()
+        ds.PatientID = id
+        ds.PatientName = &#39;&#39;
+        ds.PatientBirthDate = &#39;&#39;
+        ds.PatientSex = &#39;&#39;
+        ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+        results = cfind(scp_settings, ds)
+        if len(results) &gt; 0:
+            return Patient.parse_result(results[0], scp_settings)
+
+    @staticmethod
+    def parse_result(result, scp_settings):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a patient &#39;&#39;&#39;
+        patient = Patient(scp_settings=scp_settings)
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0010, 0010)&#39;):
+                patient.name = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0020)&#39;):
+                patient.id = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0040)&#39;):
+                patient.patient_sex = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0030)&#39;):
+                patient.dob = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return patient
+
+
+    @staticmethod
+    def from_study(study):
+        &#39;&#39;&#39;Create a patient object from a study&#39;&#39;&#39;
+        ds = Dataset()
+        ds.PatientID = &#39;&#39;
+        ds.PatientName = &#39;&#39;
+        ds.PatientBirthDate = &#39;&#39;
+        ds.PatientSex = &#39;&#39;
+        ds.StudyInstanceUID = study.study_uid
+        ds.AccessionNumber = study.accession_number
+        ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+        results = cfind(study.scp_settings, ds)
+        if len(results) &gt; 1:
+            parse_result(result, study.scp_settings)
+
+### Study class
+class Study:
+    &#39;&#39;&#39; Contains the details for a single study&#39;&#39;&#39;
+    study_uid = None
+    accession_number = None
+    modalities_in_study = None
+    study_date = None
+    study_time = None
+    description = None
+    scp_settings = None
+
+    def __init__(self, scp_settings=None):
+        self.scp_settings = scp_settings
+
+    def __str__(self):
+        return (
+            &#39;study_uid           : &#39; + str(self.study_uid) + &#39;\n&#39; +
+            &#39;accession_number    : &#39; + str(self.accession_number) + &#39;\n&#39; +
+            &#39;modalities_in_study : &#39; + str(self.modalities_in_study) + &#39;\n&#39; +
+            &#39;study_date          : &#39; + str(self.study_date) + &#39;\n&#39; +
+            &#39;study_time          : &#39; + str(self.study_time) + &#39;\n&#39; +
+            &#39;description         : &#39; + str(self.description)+ &#39;\n&#39; +
+            &#39;scp_settings        : &#39; + str(self.scp_settings))
+
+    def find_series(self):
+        &#39;&#39;&#39;Find all series for this study&#39;&#39;&#39;
+        return find_series_from_study(self)
+
+    def get_report(self):
+        &#39;&#39;&#39;CGET the report for this study&#39;&#39;&#39;
+        series = self.find_series()
+        for seri in [s for s in series if s.modality == &#39;SR&#39;]:
+            if seri.modality == &#39;SR&#39;:
+                ds = Dataset()
+                ds.SeriesInstanceUID = seri.series_uid
+                ds.StudyInstanceUID = self.study_uid
+                ds.QueryRetrieveLevel = &#39;SERIES&#39;
+                return Report(cget_report(self.scp_settings, ds))
+
+                #for result in results:
+                #    print(&#34;Result:::::::: &#34;, result)
+                #if (len(results) &gt; 0):
+                #    report = Report.parse_result(results[0])
+                #    report.study = self
+            print(&#39;could not find report&#39;)
+            return None
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a study &#39;&#39;&#39;
+        study = Study()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0008, 0020)&#39;):
+                study.study_date = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0030)&#39;):
+                study.study_time = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0050)&#39;):
+                study.accession_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 1030)&#39;):
+                study.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0061)&#39;):
+                try:
+                    study.modalities_in_study = ast.literal_eval(field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;))
+                except:
+                    study.modalities_in_study = [field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)]
+            elif field.startswith(&#39;(0020, 000d)&#39;):
+                study.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return study
+
+class Series:
+    &#39;&#39;&#39;Contains the details of a single series&#39;&#39;&#39;
+    series_uid = None
+    study_uid = None
+    modality = None
+    series_number = None
+    description = None
+    study_date = None
+    scp_settings = None
+
+    def __init__(self, scp_settings=None):
+        self.scp_settings = scp_settings
+
+    def __str__(self):
+        return (
+            &#39;series_uid   : &#39; + str(self.series_uid) + &#39;\n&#39; +
+            &#39;study_uid     : &#39; + str(self.study_uid) + &#39;\n&#39; +
+            &#39;modality     : &#39; + str(self.modality) + &#39;\n&#39; +
+            &#39;series_number: &#39; + str(self.series_number) + &#39;\n&#39; +
+            &#39;description  : &#39; + str(self.description)+ &#39;\n&#39; +
+            &#39;study_date  : &#39; + str(self.study_date)+ &#39;\n&#39; +
+            &#39;scp_settings : &#39; + str(self.scp_settings))
+
+    def save_dicom(self, dir_path):
+        &#39;&#39;&#39;Save this series as a dicom (to folder)&#39;&#39;&#39;
+        if not os.path.exists(dir_path): os.mkdir(dir_path)
+        ds = Dataset()
+        ds.SeriesInstanceUID = self.series_uid
+        ds.StudyInstanceUID = self.study_uid
+        ds.QueryRetrieveLevel = &#39;SERIES&#39;
+        dicoms = cget_series(self.scp_settings, ds)
+        for dicom in dicoms:
+             dicom.save_as(os.path.join(dir_path, dicom.SOPInstanceUID +&#39;.dcm&#39;), write_like_original=False)
+        return True
+
+    def save_nifti(self, file_path, max_attempts=3):
+        &#39;&#39;&#39;Save this series as a nifti file&#39;&#39;&#39;
+        if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != &#39;&#39;:
+            os.mkdir(os.path.dirname(file_path))
+        ds = Dataset()
+        ds.SeriesInstanceUID = self.series_uid
+        ds.StudyInstanceUID = self.study_uid
+        ds.QueryRetrieveLevel = &#39;SERIES&#39;
+        dicoms = None
+        attempts = 0
+        while dicoms == None and attempts &lt; max_attempts:
+            attempts += 1
+            try:
+                dicoms = cget_series(self.scp_settings, ds)
+            except:
+                if attempts &gt;= max_attempts:
+                    raise
+
+        try:
+            dicom_array_to_nifti(dicoms, file_path, reorient_nifti=True)
+            return True
+        except:
+            print(&#39;Failed to convert series to nifti, maybe try DICOM?&#39;)
+            return False
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a series &#39;&#39;&#39;
+        series = Series()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0020, 000e)&#39;):
+                series.series_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0060)&#39;):
+                series.modality = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0020, 0011)&#39;):
+                series.series_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 103e)&#39;):
+                series.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0020, 000d)&#39;):
+                series.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0020)&#39;):
+                series.study_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return series
+
+class Report(Series):
+    &#39;&#39;&#39;This class represents a study report&#39;&#39;&#39;
+    patient_name = None
+    patient_id = None
+    patient_dob = None
+    patient_sex = None
+    study_uid = None
+    series_uid = None
+    completion_flag = None
+    verification_flag = None
+    type = None
+    text = None
+
+    def __init__(self, dataset=None, study=None):
+            self.study = study
+            if dataset != None:
+                self.patient_name = dataset.PatientName
+                self.patient_id = dataset.PatientID
+                self.patient_dob = dataset.PatientBirthDate
+                self.patient_sex = dataset.PatientSex
+                self.study_uid = dataset.StudyInstanceUID
+                self.series_uid = dataset.SeriesInstanceUID
+                self.completion_flag = dataset.CompletionFlag
+                self.verification_flag = dataset.VerificationFlag
+                self.type = dataset.ContentSequence[0].ValueType
+                self.text = dataset.ContentSequence[0].TextValue
+
+    def __str__(self):
+        return (
+            &#39;REPORT: &#39; + &#39;\n&#39; +
+            &#39;patient_name     : &#39; + str(self.patient_name) + &#39;\n&#39; +
+            &#39;patient_id       : &#39; + str(self.patient_id) + &#39;\n&#39; +
+            &#39;patient_dob      : &#39; + str(self.patient_dob) + &#39;\n&#39; +
+            &#39;patient_sex      : &#39; + str(self.patient_sex)+ &#39;\n&#39; +
+            &#39;study_uid        : &#39; + str(self.study_uid)+ &#39;\n&#39; +
+            &#39;series_uid       : &#39; + str(self.series_uid)+ &#39;\n&#39; +
+            &#39;completion_flag  : &#39; + str(self.completion_flag)+ &#39;\n&#39; +
+            &#39;verification_flag: &#39; + str(self.verification_flag)+ &#39;\n&#39; +
+            &#39;type             : &#39; + str(self.type)+ &#39;\n&#39; +
+            &#39;text             : &#39; + str(self.text))
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a report &#39;&#39;&#39;
+        report = Report()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0040, a040)&#39;):
+                report.type = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0040, a160)&#39;):
+                report.text = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0040, a491)&#39;):
+                report.series_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return report</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pattools.pacs.cfind"><code class="name flex">
+<span>def <span class="ident">cfind</span></span>(<span>scp_settings, dataset, query_model='P')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Make a CFIND request</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cfind(scp_settings, dataset, query_model=&#39;P&#39;):
+    &#39;&#39;&#39; Make a CFIND request &#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelFind)
+    ae.add_requested_context(PatientRootQueryRetrieveInformationModelFind)
+    ae.add_requested_context(&#39;1.2.840.10008.5.1.4.1.1.88.11&#39;)
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port, ae_title=scp_settings.ae_title)
+
+    #Check for successful association
+    if assoc.is_established:
+         # Use the C-FIND service to send the identifier
+         responses = assoc.send_c_find(dataset, query_model=query_model)
+
+         result = []
+         for (status, identifier) in responses:
+             if status:
+                 # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                 if status.Status in (0xFF00, 0xFF01):
+                     result.append(str(identifier))
+             else:
+                 assoc.release()
+                 raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response &#39; + scp_settings.ae_title)
+
+         # Release the association
+         assoc.release()
+         return result
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected &#39; + scp_settings.ae_title)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.cget_report"><code class="name flex">
+<span>def <span class="ident">cget_report</span></span>(<span>scp_settings, dataset)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Runs a CGET request for a report</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cget_report(scp_settings, dataset):
+    &#39;&#39;&#39;Runs a CGET request for a report&#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    # Add the requested presentation contexts (QR SCU)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
+    # Add the requested presentation context (Storage SCP)
+    ae.add_requested_context(BasicTextSRStorage)
+    ae.add_requested_context(EnhancedSRStorage)
+
+    # Create an SCP/SCU Role Selection Negotiation item for CT Image Storage
+    roles = []
+    roles.append(build_role(BasicTextSRStorage, scp_role=True))
+    roles.append(build_role(EnhancedSRStorage, scp_role=True))
+
+    reportds = None
+    def handle_store_report(e):
+        nonlocal reportds
+        reportds = e.dataset
+        return  0x0000
+
+    handlers = [(evt.EVT_C_STORE, handle_store_report)]
+
+    # Associate with peer AE
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port,
+        ae_title=scp_settings.ae_title, ext_neg=roles, evt_handlers=handlers)
+
+    if assoc.is_established:
+        responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
+        for (status, identifier) in responses:
+            if status:
+                # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                if status.Status in (0xFF00, 0xFF01):
+                    result.append(str(identifier))
+            else:
+                raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response&#39;)
+
+        assoc.release()
+        return reportds
+
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected&#39;)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.cget_series"><code class="name flex">
+<span>def <span class="ident">cget_series</span></span>(<span>scp_settings, dataset)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Runs a series level CGET request</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cget_series(scp_settings, dataset):
+    &#39;&#39;&#39;Runs a series level CGET request&#39;&#39;&#39;
+    ae = AE(scp_settings.local_aet)
+    # Add the requested presentation contexts (QR SCU)
+    ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
+    # Add the requested presentation context (Storage SCP)
+    ae.add_requested_context(CTImageStorage)
+    ae.add_requested_context(EnhancedCTImageStorage)
+    ae.add_requested_context(MRImageStorage)
+    ae.add_requested_context(MRSpectroscopyStorage)
+    ae.add_requested_context(EnhancedMRColorImageStorage)
+    # Note, we can add to these if we want other types of image (see massive import statement)
+
+    # Create an SCP/SCU Role Selection Negotiation item for Image Storage
+    roles = []
+    roles.append(build_role(CTImageStorage, scp_role=True))
+    roles.append(build_role(EnhancedCTImageStorage, scp_role=True))
+    roles.append(build_role(MRImageStorage, scp_role=True))
+    roles.append(build_role(MRSpectroscopyStorage, scp_role=True))
+    roles.append(build_role(EnhancedMRColorImageStorage, scp_role=True))
+
+    dicoms = []
+    def handle_store_series(e):
+        nonlocal dicoms
+
+        ds = e.dataset
+        context = e.context
+        meta = Dataset()
+        # Add the DICOM File Meta Information
+        meta = Dataset()
+        meta.MediaStorageSOPClassUID = ds.SOPClassUID
+        meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
+        meta.ImplementationClassUID = PYNETDICOM_IMPLEMENTATION_UID
+        meta.ImplementationVersionName = PYNETDICOM_IMPLEMENTATION_VERSION
+        meta.TransferSyntaxUID = context.transfer_syntax
+
+        # Add the file meta to the dataset
+        ds.file_meta = meta
+
+        # Set the transfer syntax attributes of the dataset
+        ds.is_little_endian = context.transfer_syntax.is_little_endian
+        ds.is_implicit_VR = context.transfer_syntax.is_implicit_VR
+
+        dicoms.append(ds)
+
+        return 0x0000
+    handlers = [(evt.EVT_C_STORE, handle_store_series)]
+
+    # Associate with peer AE
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port,
+        ae_title=scp_settings.ae_title, ext_neg=roles, evt_handlers=handlers)
+
+    if assoc.is_established:
+        responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
+        for (status, identifier) in responses:
+            if status:
+                # If the status is &#39;Pending&#39; then identifier is the C-FIND response
+                if status.Status in (0xFF00, 0xFF01):
+                    result.append(str(identifier))
+            else:
+                raise TimeoutError(&#39;Connection timed out, was aborted or received invalid response&#39;)
+
+        assoc.release()
+        return dicoms
+    else:
+        raise ConnectionError(&#39;Association rejected, aborted or never connected&#39;)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.find_series_from_study"><code class="name flex">
+<span>def <span class="ident">find_series_from_study</span></span>(<span>study)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>CFINDS all series for a given study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_series_from_study(study):
+    &#39;&#39;&#39;CFINDS all series for a given study&#39;&#39;&#39;
+    ds = Dataset()
+    ds.StudyInstanceUID = study.study_uid
+    ds.AccessionNumber = &#39;&#39;
+    ds.QueryRetrieveLevel = &#39;SERIES&#39;
+    ds.SeriesInstanceUID=&#39;&#39;
+    ds.SeriesDescription = &#39;&#39;
+    ds.SeriesNumber = &#39;&#39;
+    ds.Modality =&#39;&#39;
+    ds.SeriesDate=&#39;&#39;
+    ds.StudyDate = &#39;&#39;
+    ds.SeriesTime=&#39;&#39;
+    ds.StudyDescription = &#39;*&#39;
+    results = cfind(study.scp_settings, ds, query_model=&#39;S&#39;)
+    series = []
+    for result in results:
+        seri = Series.parse_result(result)
+        seri.scp_settings = study.scp_settings
+        if seri != None: series.append(seri)
+
+    return series</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.find_studies"><code class="name flex">
+<span>def <span class="ident">find_studies</span></span>(<span>scp_settings, patient_name='', patient_id='', study_uid='', accession_number='', modalities_in_study='', study_date='', study_time='', description='')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Run a study level CFIND requests using the supplied parameters</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_studies(scp_settings, patient_name = &#39;&#39;, patient_id = &#39;&#39; ,study_uid = &#39;&#39;,
+    accession_number = &#39;&#39;, modalities_in_study = &#39;&#39;, study_date = &#39;&#39;,
+    study_time = &#39;&#39;, description = &#39;&#39;):
+    &#39;&#39;&#39;Run a study level CFIND requests using the supplied parameters&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = patient_id
+    ds.PatientName = patient_name
+    ds.StudyInstanceUID = study_uid
+    ds.AccessionNumber = accession_number
+    ds.QueryRetrieveLevel = &#39;STUDY&#39;
+    ds.ModalitiesInStudy = str(modalities_in_study)
+    ds.StudyDescription = description
+    ds.SeriesInStudy=&#39;&#39;
+    ds.StudyDate=study_date
+    ds.StudyTime=study_time
+
+    results = cfind(scp_settings, ds)
+    studies = []
+    for result in results:
+        study = Study.parse_result(result)
+        study.scp_settings = patient.scp_settings
+        if study != None: studies.append(study)
+
+    return studies</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.find_studies_from_patient"><code class="name flex">
+<span>def <span class="ident">find_studies_from_patient</span></span>(<span>patient)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Runs a CFIND for all studies for a given patient</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_studies_from_patient(patient):
+    &#39;&#39;&#39;Runs a CFIND for all studies for a given patient&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = patient.id
+    ds.PatientName = patient.name
+    ds.StudyInstanceUID = &#39;&#39;
+    ds.AccessionNumber = &#39;&#39;
+    ds.QueryRetrieveLevel = &#39;STUDY&#39;
+    ds.SeriesUID=&#39;&#39;
+    ds.PatientSize = &#39;&#39;
+    ds.ModalitiesInStudy = &#39;&#39;
+    ds.SOPClassesInStudy = &#39;&#39;
+    ds.StudyDescription = &#39;*&#39;
+    ds.FailedSOPSequence = &#39;&#39;
+    ds.DerivationCodeSequence =&#39;&#39;
+    ds.SeriesInStudy=&#39;&#39;
+    ds.StudyDate=&#39;&#39;
+    ds.StudyTime=&#39;&#39;
+    results = cfind(patient.scp_settings, ds)
+    studies = []
+    for result in results:
+        study = Study.parse_result(result)
+        study.scp_settings = patient.scp_settings
+        if study != None: studies.append(study)
+
+    return studies</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pattools.pacs.Patient"><code class="flex name class">
+<span>class <span class="ident">Patient</span></span>
+<span>(</span><span>id=None, scp_settings=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Contains the details for a single patient </p>
+<p>Requires an id string and the scp_settings of the remote PACs scp</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Patient:
+    &#39;&#39;&#39; Contains the details for a single patient &#39;&#39;&#39;
+    id = None
+    name = &#39;&#39;
+    dob = &#39;&#39;
+    patient_sex = &#39;&#39;
+    scp_settings = None
+
+    def __init__(self, id=None, scp_settings=None):
+        &#39;&#39;&#39; Requires an id string and the scp_settings of the remote PACs scp &#39;&#39;&#39;
+        self.id = id
+        self.scp_settings = scp_settings
+        if id != None and scp_settings !=None:
+            patient = Patient.from_id(id, scp_settings)
+            self.name = patient.name
+            self.dob = patient.dob
+            self.patient_sex = patient.patient_sex
+
+    def __str__(self):
+        return (
+            &#39;id          : &#39; + str(self.id) + &#39;\n&#39; +
+            &#39;name        : &#39; + str(self.name) + &#39;\n&#39; +
+            &#39;dob         : &#39; + str(self.dob) + &#39;\n&#39; +
+            &#39;patient_sex : &#39; + str(self.patient_sex) + &#39;\n&#39; +
+            &#39;scp_settings: &#39; + str(self.scp_settings))
+
+    def find_studies(self):
+        &#39;&#39;&#39; Find all remote studies for the patient &#39;&#39;&#39;
+        return find_studies_from_patient(self)
+
+    @staticmethod
+    def from_id(id, scp_settings):
+        &#39;&#39;&#39;Returns a patient from a given patient id&#39;&#39;&#39;
+        ds = Dataset()
+        ds.PatientID = id
+        ds.PatientName = &#39;&#39;
+        ds.PatientBirthDate = &#39;&#39;
+        ds.PatientSex = &#39;&#39;
+        ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+        results = cfind(scp_settings, ds)
+        if len(results) &gt; 0:
+            return Patient.parse_result(results[0], scp_settings)
+
+    @staticmethod
+    def parse_result(result, scp_settings):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a patient &#39;&#39;&#39;
+        patient = Patient(scp_settings=scp_settings)
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0010, 0010)&#39;):
+                patient.name = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0020)&#39;):
+                patient.id = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0040)&#39;):
+                patient.patient_sex = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0010, 0030)&#39;):
+                patient.dob = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return patient
+
+
+    @staticmethod
+    def from_study(study):
+        &#39;&#39;&#39;Create a patient object from a study&#39;&#39;&#39;
+        ds = Dataset()
+        ds.PatientID = &#39;&#39;
+        ds.PatientName = &#39;&#39;
+        ds.PatientBirthDate = &#39;&#39;
+        ds.PatientSex = &#39;&#39;
+        ds.StudyInstanceUID = study.study_uid
+        ds.AccessionNumber = study.accession_number
+        ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+        results = cfind(study.scp_settings, ds)
+        if len(results) &gt; 1:
+            parse_result(result, study.scp_settings)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.pacs.Patient.dob"><code class="name">var <span class="ident">dob</span></code></dt>
+<dd>
+<section class="desc"><p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.</p></section>
+</dd>
+<dt id="pattools.pacs.Patient.id"><code class="name">var <span class="ident">id</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Patient.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<section class="desc"><p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.</p></section>
+</dd>
+<dt id="pattools.pacs.Patient.patient_sex"><code class="name">var <span class="ident">patient_sex</span></code></dt>
+<dd>
+<section class="desc"><p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.</p></section>
+</dd>
+<dt id="pattools.pacs.Patient.scp_settings"><code class="name">var <span class="ident">scp_settings</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.pacs.Patient.from_id"><code class="name flex">
+<span>def <span class="ident">from_id</span></span>(<span>id, scp_settings)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Returns a patient from a given patient id</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def from_id(id, scp_settings):
+    &#39;&#39;&#39;Returns a patient from a given patient id&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = id
+    ds.PatientName = &#39;&#39;
+    ds.PatientBirthDate = &#39;&#39;
+    ds.PatientSex = &#39;&#39;
+    ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+    results = cfind(scp_settings, ds)
+    if len(results) &gt; 0:
+        return Patient.parse_result(results[0], scp_settings)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.Patient.from_study"><code class="name flex">
+<span>def <span class="ident">from_study</span></span>(<span>study)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Create a patient object from a study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def from_study(study):
+    &#39;&#39;&#39;Create a patient object from a study&#39;&#39;&#39;
+    ds = Dataset()
+    ds.PatientID = &#39;&#39;
+    ds.PatientName = &#39;&#39;
+    ds.PatientBirthDate = &#39;&#39;
+    ds.PatientSex = &#39;&#39;
+    ds.StudyInstanceUID = study.study_uid
+    ds.AccessionNumber = study.accession_number
+    ds.QueryRetrieveLevel = &#39;PATIENT&#39;
+    results = cfind(study.scp_settings, ds)
+    if len(results) &gt; 1:
+        parse_result(result, study.scp_settings)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.Patient.parse_result"><code class="name flex">
+<span>def <span class="ident">parse_result</span></span>(<span>result, scp_settings)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Parse a pynetdicom result and return a patient</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def parse_result(result, scp_settings):
+    &#39;&#39;&#39; Parse a pynetdicom result and return a patient &#39;&#39;&#39;
+    patient = Patient(scp_settings=scp_settings)
+    for field in result.split(&#39;\n&#39;):
+        if field.startswith(&#39;(0010, 0010)&#39;):
+            patient.name = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0010, 0020)&#39;):
+            patient.id = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0010, 0040)&#39;):
+            patient.patient_sex = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0010, 0030)&#39;):
+            patient.dob = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+    return patient</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.pacs.Patient.find_studies"><code class="name flex">
+<span>def <span class="ident">find_studies</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Find all remote studies for the patient</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_studies(self):
+    &#39;&#39;&#39; Find all remote studies for the patient &#39;&#39;&#39;
+    return find_studies_from_patient(self)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.pacs.Report"><code class="flex name class">
+<span>class <span class="ident">Report</span></span>
+<span>(</span><span>dataset=None, study=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>This class represents a study report</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Report(Series):
+    &#39;&#39;&#39;This class represents a study report&#39;&#39;&#39;
+    patient_name = None
+    patient_id = None
+    patient_dob = None
+    patient_sex = None
+    study_uid = None
+    series_uid = None
+    completion_flag = None
+    verification_flag = None
+    type = None
+    text = None
+
+    def __init__(self, dataset=None, study=None):
+            self.study = study
+            if dataset != None:
+                self.patient_name = dataset.PatientName
+                self.patient_id = dataset.PatientID
+                self.patient_dob = dataset.PatientBirthDate
+                self.patient_sex = dataset.PatientSex
+                self.study_uid = dataset.StudyInstanceUID
+                self.series_uid = dataset.SeriesInstanceUID
+                self.completion_flag = dataset.CompletionFlag
+                self.verification_flag = dataset.VerificationFlag
+                self.type = dataset.ContentSequence[0].ValueType
+                self.text = dataset.ContentSequence[0].TextValue
+
+    def __str__(self):
+        return (
+            &#39;REPORT: &#39; + &#39;\n&#39; +
+            &#39;patient_name     : &#39; + str(self.patient_name) + &#39;\n&#39; +
+            &#39;patient_id       : &#39; + str(self.patient_id) + &#39;\n&#39; +
+            &#39;patient_dob      : &#39; + str(self.patient_dob) + &#39;\n&#39; +
+            &#39;patient_sex      : &#39; + str(self.patient_sex)+ &#39;\n&#39; +
+            &#39;study_uid        : &#39; + str(self.study_uid)+ &#39;\n&#39; +
+            &#39;series_uid       : &#39; + str(self.series_uid)+ &#39;\n&#39; +
+            &#39;completion_flag  : &#39; + str(self.completion_flag)+ &#39;\n&#39; +
+            &#39;verification_flag: &#39; + str(self.verification_flag)+ &#39;\n&#39; +
+            &#39;type             : &#39; + str(self.type)+ &#39;\n&#39; +
+            &#39;text             : &#39; + str(self.text))
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a report &#39;&#39;&#39;
+        report = Report()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0040, a040)&#39;):
+                report.type = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0040, a160)&#39;):
+                report.text = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0040, a491)&#39;):
+                report.series_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return report</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="pattools.pacs.Series" href="#pattools.pacs.Series">Series</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.pacs.Report.completion_flag"><code class="name">var <span class="ident">completion_flag</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.patient_dob"><code class="name">var <span class="ident">patient_dob</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.patient_id"><code class="name">var <span class="ident">patient_id</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.patient_name"><code class="name">var <span class="ident">patient_name</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.patient_sex"><code class="name">var <span class="ident">patient_sex</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.series_uid"><code class="name">var <span class="ident">series_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.study_uid"><code class="name">var <span class="ident">study_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.type"><code class="name">var <span class="ident">type</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Report.verification_flag"><code class="name">var <span class="ident">verification_flag</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.pacs.Report.parse_result"><code class="name flex">
+<span>def <span class="ident">parse_result</span></span>(<span>result)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Parse a pynetdicom result and return a report</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def parse_result(result):
+    &#39;&#39;&#39; Parse a pynetdicom result and return a report &#39;&#39;&#39;
+    report = Report()
+    for field in result.split(&#39;\n&#39;):
+        if field.startswith(&#39;(0040, a040)&#39;):
+            report.type = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0040, a160)&#39;):
+            report.text = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0040, a491)&#39;):
+            report.series_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+    return report</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="pattools.pacs.Series" href="#pattools.pacs.Series">Series</a></b></code>:
+<ul class="hlist">
+<li><code><a title="pattools.pacs.Series.save_dicom" href="#pattools.pacs.Series.save_dicom">save_dicom</a></code></li>
+<li><code><a title="pattools.pacs.Series.save_nifti" href="#pattools.pacs.Series.save_nifti">save_nifti</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="pattools.pacs.ScpSettings"><code class="flex name class">
+<span>class <span class="ident">ScpSettings</span></span>
+<span>(</span><span>ae_title, host, port, local_aet=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>A class representing SCP settings (i.e. how to connect to PACS)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ScpSettings:
+  &#39;&#39;&#39;A class representing SCP settings (i.e. how to connect to PACS)&#39;&#39;&#39;
+  ae_title = None
+  host = None
+  port = None
+  local_aet = None
+
+  def __init__(self, ae_title, host, port, local_aet=None):
+      self.ae_title = ae_title
+      self.host = host
+      self.port = port
+      if local_aet != None: self.local_aet = local_aet
+      else: self.local_aet = ae_title
+      # The above is a little sneaky because the remote PACS might not want to
+      # talk to an unknown SCP. But it knows itself, so it will often be happy
+      # to dump all its info to someone with the same name.
+
+  def __str__(self):
+      return (
+        &#39;ae_title[&#39; + str(self.ae_title) +
+        &#39;], host[&#39; + str(self.host) +
+        &#39;], port[&#39; + str(self.port) + &#39;]&#39;
+      )</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.pacs.ScpSettings.ae_title"><code class="name">var <span class="ident">ae_title</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.ScpSettings.host"><code class="name">var <span class="ident">host</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.ScpSettings.local_aet"><code class="name">var <span class="ident">local_aet</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.ScpSettings.port"><code class="name">var <span class="ident">port</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.pacs.Series"><code class="flex name class">
+<span>class <span class="ident">Series</span></span>
+<span>(</span><span>scp_settings=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Contains the details of a single series</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Series:
+    &#39;&#39;&#39;Contains the details of a single series&#39;&#39;&#39;
+    series_uid = None
+    study_uid = None
+    modality = None
+    series_number = None
+    description = None
+    study_date = None
+    scp_settings = None
+
+    def __init__(self, scp_settings=None):
+        self.scp_settings = scp_settings
+
+    def __str__(self):
+        return (
+            &#39;series_uid   : &#39; + str(self.series_uid) + &#39;\n&#39; +
+            &#39;study_uid     : &#39; + str(self.study_uid) + &#39;\n&#39; +
+            &#39;modality     : &#39; + str(self.modality) + &#39;\n&#39; +
+            &#39;series_number: &#39; + str(self.series_number) + &#39;\n&#39; +
+            &#39;description  : &#39; + str(self.description)+ &#39;\n&#39; +
+            &#39;study_date  : &#39; + str(self.study_date)+ &#39;\n&#39; +
+            &#39;scp_settings : &#39; + str(self.scp_settings))
+
+    def save_dicom(self, dir_path):
+        &#39;&#39;&#39;Save this series as a dicom (to folder)&#39;&#39;&#39;
+        if not os.path.exists(dir_path): os.mkdir(dir_path)
+        ds = Dataset()
+        ds.SeriesInstanceUID = self.series_uid
+        ds.StudyInstanceUID = self.study_uid
+        ds.QueryRetrieveLevel = &#39;SERIES&#39;
+        dicoms = cget_series(self.scp_settings, ds)
+        for dicom in dicoms:
+             dicom.save_as(os.path.join(dir_path, dicom.SOPInstanceUID +&#39;.dcm&#39;), write_like_original=False)
+        return True
+
+    def save_nifti(self, file_path, max_attempts=3):
+        &#39;&#39;&#39;Save this series as a nifti file&#39;&#39;&#39;
+        if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != &#39;&#39;:
+            os.mkdir(os.path.dirname(file_path))
+        ds = Dataset()
+        ds.SeriesInstanceUID = self.series_uid
+        ds.StudyInstanceUID = self.study_uid
+        ds.QueryRetrieveLevel = &#39;SERIES&#39;
+        dicoms = None
+        attempts = 0
+        while dicoms == None and attempts &lt; max_attempts:
+            attempts += 1
+            try:
+                dicoms = cget_series(self.scp_settings, ds)
+            except:
+                if attempts &gt;= max_attempts:
+                    raise
+
+        try:
+            dicom_array_to_nifti(dicoms, file_path, reorient_nifti=True)
+            return True
+        except:
+            print(&#39;Failed to convert series to nifti, maybe try DICOM?&#39;)
+            return False
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a series &#39;&#39;&#39;
+        series = Series()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0020, 000e)&#39;):
+                series.series_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0060)&#39;):
+                series.modality = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0020, 0011)&#39;):
+                series.series_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 103e)&#39;):
+                series.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0020, 000d)&#39;):
+                series.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0020)&#39;):
+                series.study_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return series</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="pattools.pacs.Report" href="#pattools.pacs.Report">Report</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.pacs.Series.description"><code class="name">var <span class="ident">description</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.modality"><code class="name">var <span class="ident">modality</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.scp_settings"><code class="name">var <span class="ident">scp_settings</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.series_number"><code class="name">var <span class="ident">series_number</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.series_uid"><code class="name">var <span class="ident">series_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.study_date"><code class="name">var <span class="ident">study_date</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Series.study_uid"><code class="name">var <span class="ident">study_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.pacs.Series.parse_result"><code class="name flex">
+<span>def <span class="ident">parse_result</span></span>(<span>result)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Parse a pynetdicom result and return a series</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def parse_result(result):
+    &#39;&#39;&#39; Parse a pynetdicom result and return a series &#39;&#39;&#39;
+    series = Series()
+    for field in result.split(&#39;\n&#39;):
+        if field.startswith(&#39;(0020, 000e)&#39;):
+            series.series_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 0060)&#39;):
+            series.modality = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0020, 0011)&#39;):
+            series.series_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 103e)&#39;):
+            series.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0020, 000d)&#39;):
+            series.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 0020)&#39;):
+            series.study_date = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+    return series</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.pacs.Series.save_dicom"><code class="name flex">
+<span>def <span class="ident">save_dicom</span></span>(<span>self, dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Save this series as a dicom (to folder)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_dicom(self, dir_path):
+    &#39;&#39;&#39;Save this series as a dicom (to folder)&#39;&#39;&#39;
+    if not os.path.exists(dir_path): os.mkdir(dir_path)
+    ds = Dataset()
+    ds.SeriesInstanceUID = self.series_uid
+    ds.StudyInstanceUID = self.study_uid
+    ds.QueryRetrieveLevel = &#39;SERIES&#39;
+    dicoms = cget_series(self.scp_settings, ds)
+    for dicom in dicoms:
+         dicom.save_as(os.path.join(dir_path, dicom.SOPInstanceUID +&#39;.dcm&#39;), write_like_original=False)
+    return True</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.Series.save_nifti"><code class="name flex">
+<span>def <span class="ident">save_nifti</span></span>(<span>self, file_path, max_attempts=3)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Save this series as a nifti file</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_nifti(self, file_path, max_attempts=3):
+    &#39;&#39;&#39;Save this series as a nifti file&#39;&#39;&#39;
+    if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != &#39;&#39;:
+        os.mkdir(os.path.dirname(file_path))
+    ds = Dataset()
+    ds.SeriesInstanceUID = self.series_uid
+    ds.StudyInstanceUID = self.study_uid
+    ds.QueryRetrieveLevel = &#39;SERIES&#39;
+    dicoms = None
+    attempts = 0
+    while dicoms == None and attempts &lt; max_attempts:
+        attempts += 1
+        try:
+            dicoms = cget_series(self.scp_settings, ds)
+        except:
+            if attempts &gt;= max_attempts:
+                raise
+
+    try:
+        dicom_array_to_nifti(dicoms, file_path, reorient_nifti=True)
+        return True
+    except:
+        print(&#39;Failed to convert series to nifti, maybe try DICOM?&#39;)
+        return False</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.pacs.Study"><code class="flex name class">
+<span>class <span class="ident">Study</span></span>
+<span>(</span><span>scp_settings=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Contains the details for a single study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Study:
+    &#39;&#39;&#39; Contains the details for a single study&#39;&#39;&#39;
+    study_uid = None
+    accession_number = None
+    modalities_in_study = None
+    study_date = None
+    study_time = None
+    description = None
+    scp_settings = None
+
+    def __init__(self, scp_settings=None):
+        self.scp_settings = scp_settings
+
+    def __str__(self):
+        return (
+            &#39;study_uid           : &#39; + str(self.study_uid) + &#39;\n&#39; +
+            &#39;accession_number    : &#39; + str(self.accession_number) + &#39;\n&#39; +
+            &#39;modalities_in_study : &#39; + str(self.modalities_in_study) + &#39;\n&#39; +
+            &#39;study_date          : &#39; + str(self.study_date) + &#39;\n&#39; +
+            &#39;study_time          : &#39; + str(self.study_time) + &#39;\n&#39; +
+            &#39;description         : &#39; + str(self.description)+ &#39;\n&#39; +
+            &#39;scp_settings        : &#39; + str(self.scp_settings))
+
+    def find_series(self):
+        &#39;&#39;&#39;Find all series for this study&#39;&#39;&#39;
+        return find_series_from_study(self)
+
+    def get_report(self):
+        &#39;&#39;&#39;CGET the report for this study&#39;&#39;&#39;
+        series = self.find_series()
+        for seri in [s for s in series if s.modality == &#39;SR&#39;]:
+            if seri.modality == &#39;SR&#39;:
+                ds = Dataset()
+                ds.SeriesInstanceUID = seri.series_uid
+                ds.StudyInstanceUID = self.study_uid
+                ds.QueryRetrieveLevel = &#39;SERIES&#39;
+                return Report(cget_report(self.scp_settings, ds))
+
+                #for result in results:
+                #    print(&#34;Result:::::::: &#34;, result)
+                #if (len(results) &gt; 0):
+                #    report = Report.parse_result(results[0])
+                #    report.study = self
+            print(&#39;could not find report&#39;)
+            return None
+
+    @staticmethod
+    def parse_result(result):
+        &#39;&#39;&#39; Parse a pynetdicom result and return a study &#39;&#39;&#39;
+        study = Study()
+        for field in result.split(&#39;\n&#39;):
+            if field.startswith(&#39;(0008, 0020)&#39;):
+                study.study_date = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0030)&#39;):
+                study.study_time = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0050)&#39;):
+                study.accession_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 1030)&#39;):
+                study.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+            elif field.startswith(&#39;(0008, 0061)&#39;):
+                try:
+                    study.modalities_in_study = ast.literal_eval(field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;))
+                except:
+                    study.modalities_in_study = [field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)]
+            elif field.startswith(&#39;(0020, 000d)&#39;):
+                study.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        return study</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.pacs.Study.accession_number"><code class="name">var <span class="ident">accession_number</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.description"><code class="name">var <span class="ident">description</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.modalities_in_study"><code class="name">var <span class="ident">modalities_in_study</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.scp_settings"><code class="name">var <span class="ident">scp_settings</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.study_date"><code class="name">var <span class="ident">study_date</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.study_time"><code class="name">var <span class="ident">study_time</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.pacs.Study.study_uid"><code class="name">var <span class="ident">study_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.pacs.Study.parse_result"><code class="name flex">
+<span>def <span class="ident">parse_result</span></span>(<span>result)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Parse a pynetdicom result and return a study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def parse_result(result):
+    &#39;&#39;&#39; Parse a pynetdicom result and return a study &#39;&#39;&#39;
+    study = Study()
+    for field in result.split(&#39;\n&#39;):
+        if field.startswith(&#39;(0008, 0020)&#39;):
+            study.study_date = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 0030)&#39;):
+            study.study_time = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 0050)&#39;):
+            study.accession_number = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 1030)&#39;):
+            study.description = field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+        elif field.startswith(&#39;(0008, 0061)&#39;):
+            try:
+                study.modalities_in_study = ast.literal_eval(field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;))
+            except:
+                study.modalities_in_study = [field.split(&#39;: &#39;)[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)]
+        elif field.startswith(&#39;(0020, 000d)&#39;):
+            study.study_uid = field.split()[-1].strip(&#34;&#39;&#34;).strip(&#39;&#34;&#39;)
+    return study</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.pacs.Study.find_series"><code class="name flex">
+<span>def <span class="ident">find_series</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Find all series for this study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_series(self):
+    &#39;&#39;&#39;Find all series for this study&#39;&#39;&#39;
+    return find_series_from_study(self)</code></pre>
+</details>
+</dd>
+<dt id="pattools.pacs.Study.get_report"><code class="name flex">
+<span>def <span class="ident">get_report</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>CGET the report for this study</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_report(self):
+    &#39;&#39;&#39;CGET the report for this study&#39;&#39;&#39;
+    series = self.find_series()
+    for seri in [s for s in series if s.modality == &#39;SR&#39;]:
+        if seri.modality == &#39;SR&#39;:
+            ds = Dataset()
+            ds.SeriesInstanceUID = seri.series_uid
+            ds.StudyInstanceUID = self.study_uid
+            ds.QueryRetrieveLevel = &#39;SERIES&#39;
+            return Report(cget_report(self.scp_settings, ds))
+
+            #for result in results:
+            #    print(&#34;Result:::::::: &#34;, result)
+            #if (len(results) &gt; 0):
+            #    report = Report.parse_result(results[0])
+            #    report.study = self
+        print(&#39;could not find report&#39;)
+        return None</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pattools" href="index.html">pattools</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pattools.pacs.cfind" href="#pattools.pacs.cfind">cfind</a></code></li>
+<li><code><a title="pattools.pacs.cget_report" href="#pattools.pacs.cget_report">cget_report</a></code></li>
+<li><code><a title="pattools.pacs.cget_series" href="#pattools.pacs.cget_series">cget_series</a></code></li>
+<li><code><a title="pattools.pacs.find_series_from_study" href="#pattools.pacs.find_series_from_study">find_series_from_study</a></code></li>
+<li><code><a title="pattools.pacs.find_studies" href="#pattools.pacs.find_studies">find_studies</a></code></li>
+<li><code><a title="pattools.pacs.find_studies_from_patient" href="#pattools.pacs.find_studies_from_patient">find_studies_from_patient</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pattools.pacs.Patient" href="#pattools.pacs.Patient">Patient</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.pacs.Patient.dob" href="#pattools.pacs.Patient.dob">dob</a></code></li>
+<li><code><a title="pattools.pacs.Patient.find_studies" href="#pattools.pacs.Patient.find_studies">find_studies</a></code></li>
+<li><code><a title="pattools.pacs.Patient.from_id" href="#pattools.pacs.Patient.from_id">from_id</a></code></li>
+<li><code><a title="pattools.pacs.Patient.from_study" href="#pattools.pacs.Patient.from_study">from_study</a></code></li>
+<li><code><a title="pattools.pacs.Patient.id" href="#pattools.pacs.Patient.id">id</a></code></li>
+<li><code><a title="pattools.pacs.Patient.name" href="#pattools.pacs.Patient.name">name</a></code></li>
+<li><code><a title="pattools.pacs.Patient.parse_result" href="#pattools.pacs.Patient.parse_result">parse_result</a></code></li>
+<li><code><a title="pattools.pacs.Patient.patient_sex" href="#pattools.pacs.Patient.patient_sex">patient_sex</a></code></li>
+<li><code><a title="pattools.pacs.Patient.scp_settings" href="#pattools.pacs.Patient.scp_settings">scp_settings</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.pacs.Report" href="#pattools.pacs.Report">Report</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.pacs.Report.completion_flag" href="#pattools.pacs.Report.completion_flag">completion_flag</a></code></li>
+<li><code><a title="pattools.pacs.Report.parse_result" href="#pattools.pacs.Report.parse_result">parse_result</a></code></li>
+<li><code><a title="pattools.pacs.Report.patient_dob" href="#pattools.pacs.Report.patient_dob">patient_dob</a></code></li>
+<li><code><a title="pattools.pacs.Report.patient_id" href="#pattools.pacs.Report.patient_id">patient_id</a></code></li>
+<li><code><a title="pattools.pacs.Report.patient_name" href="#pattools.pacs.Report.patient_name">patient_name</a></code></li>
+<li><code><a title="pattools.pacs.Report.patient_sex" href="#pattools.pacs.Report.patient_sex">patient_sex</a></code></li>
+<li><code><a title="pattools.pacs.Report.series_uid" href="#pattools.pacs.Report.series_uid">series_uid</a></code></li>
+<li><code><a title="pattools.pacs.Report.study_uid" href="#pattools.pacs.Report.study_uid">study_uid</a></code></li>
+<li><code><a title="pattools.pacs.Report.text" href="#pattools.pacs.Report.text">text</a></code></li>
+<li><code><a title="pattools.pacs.Report.type" href="#pattools.pacs.Report.type">type</a></code></li>
+<li><code><a title="pattools.pacs.Report.verification_flag" href="#pattools.pacs.Report.verification_flag">verification_flag</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.pacs.ScpSettings" href="#pattools.pacs.ScpSettings">ScpSettings</a></code></h4>
+<ul class="">
+<li><code><a title="pattools.pacs.ScpSettings.ae_title" href="#pattools.pacs.ScpSettings.ae_title">ae_title</a></code></li>
+<li><code><a title="pattools.pacs.ScpSettings.host" href="#pattools.pacs.ScpSettings.host">host</a></code></li>
+<li><code><a title="pattools.pacs.ScpSettings.local_aet" href="#pattools.pacs.ScpSettings.local_aet">local_aet</a></code></li>
+<li><code><a title="pattools.pacs.ScpSettings.port" href="#pattools.pacs.ScpSettings.port">port</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.pacs.Series" href="#pattools.pacs.Series">Series</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.pacs.Series.description" href="#pattools.pacs.Series.description">description</a></code></li>
+<li><code><a title="pattools.pacs.Series.modality" href="#pattools.pacs.Series.modality">modality</a></code></li>
+<li><code><a title="pattools.pacs.Series.parse_result" href="#pattools.pacs.Series.parse_result">parse_result</a></code></li>
+<li><code><a title="pattools.pacs.Series.save_dicom" href="#pattools.pacs.Series.save_dicom">save_dicom</a></code></li>
+<li><code><a title="pattools.pacs.Series.save_nifti" href="#pattools.pacs.Series.save_nifti">save_nifti</a></code></li>
+<li><code><a title="pattools.pacs.Series.scp_settings" href="#pattools.pacs.Series.scp_settings">scp_settings</a></code></li>
+<li><code><a title="pattools.pacs.Series.series_number" href="#pattools.pacs.Series.series_number">series_number</a></code></li>
+<li><code><a title="pattools.pacs.Series.series_uid" href="#pattools.pacs.Series.series_uid">series_uid</a></code></li>
+<li><code><a title="pattools.pacs.Series.study_date" href="#pattools.pacs.Series.study_date">study_date</a></code></li>
+<li><code><a title="pattools.pacs.Series.study_uid" href="#pattools.pacs.Series.study_uid">study_uid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.pacs.Study" href="#pattools.pacs.Study">Study</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.pacs.Study.accession_number" href="#pattools.pacs.Study.accession_number">accession_number</a></code></li>
+<li><code><a title="pattools.pacs.Study.description" href="#pattools.pacs.Study.description">description</a></code></li>
+<li><code><a title="pattools.pacs.Study.find_series" href="#pattools.pacs.Study.find_series">find_series</a></code></li>
+<li><code><a title="pattools.pacs.Study.get_report" href="#pattools.pacs.Study.get_report">get_report</a></code></li>
+<li><code><a title="pattools.pacs.Study.modalities_in_study" href="#pattools.pacs.Study.modalities_in_study">modalities_in_study</a></code></li>
+<li><code><a title="pattools.pacs.Study.parse_result" href="#pattools.pacs.Study.parse_result">parse_result</a></code></li>
+<li><code><a title="pattools.pacs.Study.scp_settings" href="#pattools.pacs.Study.scp_settings">scp_settings</a></code></li>
+<li><code><a title="pattools.pacs.Study.study_date" href="#pattools.pacs.Study.study_date">study_date</a></code></li>
+<li><code><a title="pattools.pacs.Study.study_time" href="#pattools.pacs.Study.study_time">study_time</a></code></li>
+<li><code><a title="pattools.pacs.Study.study_uid" href="#pattools.pacs.Study.study_uid">study_uid</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.4</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

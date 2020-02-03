@@ -1,3 +1,5 @@
+'''Timelines help organise data longitudinally'''
+
 from pattools.pacs import Series, Patient
 from pattools.resources import Atlas
 import nibabel as nib
@@ -12,10 +14,8 @@ from tempfile import TemporaryDirectory
 from datetime import date, timedelta
 import imageio
 
-
-def affine_registration(input):
-    pass
 class ScorecardElement:
+    '''The scorecard element is used to create a series filter.'''
     description = None
     points = 0
     def __init__(self, description, points):
@@ -23,6 +23,7 @@ class ScorecardElement:
         self.points = points
 
 class Filter:
+    '''The filter class extracts a 0 or 1 series from a study (which math the filter, obvs.)'''
     name = None
     scorecard = None # For matching description
     min_rows = 100
@@ -34,6 +35,7 @@ class Filter:
         self.scorecard = []
 
     def filter(self, study):
+        '''Returns the series which best matches the filter, or None if there are no good matches.'''
         series = study.find_series()
         candidates = []
 
@@ -55,6 +57,7 @@ class Filter:
 
 
 def flair_filter():
+    '''Default filter for FLAIR studies'''
     filter = Filter('FLAIR')
     filter.scorecard.append(ScorecardElement('flair', 100))
     filter.scorecard.append(ScorecardElement('mprage', -100))
@@ -73,6 +76,7 @@ def flair_filter():
     return filter
 
 def mprage_filter():
+    '''Default filter for MPRAGE studies'''
     filter = Filter('MPRAGE')
     filter.scorecard.append(ScorecardElement('mprage', 100))
     filter.scorecard.append(ScorecardElement('flair', -100))
@@ -92,9 +96,11 @@ def mprage_filter():
     return filter
 
 def default_filters():
+    '''Default filter list'''
     return [flair_filter(), mprage_filter()]
 
 class FileMetadata:
+    '''Metadata for a stored image file'''
     file = None
     processed_file = None
     filter_name = None
@@ -138,6 +144,7 @@ class FileMetadata:
         return fm
 
 class Timeline:
+    '''The timeline contains filtered lists of scans over a single patient's history'''
     patient_id = None #ID of the Patient in PACS
     path = None #Path to the root timeline folder
     start_date = None #First date covered by timeline
@@ -145,6 +152,7 @@ class Timeline:
     brain_mask = None #Brain mask which will be used
     registration_reference = None #Reference scan for registration
     is_processed = False #Is the pre-processing up to date?
+    is_rendererd = False
     datamap = {} #In-memory map of the data structure
     #^^ for now we'll try to use the file system to guide us
     filters = default_filters() #Types of scans to include (defaut FLAIR and MPRAGE)
@@ -165,6 +173,7 @@ class Timeline:
         self.save()
 
     def update_from_pacs(self, scp_settings):
+        '''Populate the Timeline from PACS'''
         if scp_settings == None: return
 
         patient = Patient(self.patient_id, scp_settings)
@@ -220,18 +229,21 @@ class Timeline:
         self.save()
 
     def save(self):
+        '''Save to disk'''
         content = json.dumps(vars(self))
         with open(os.path.join(self.path, 'timeline.metadata'), 'w') as f:
             f.write(content)
         self._save_datamap()
 
     def load(self):
+        '''Load from disk'''
         with open(os.path.join(self.path, 'timeline.metadata'), 'r') as f:
             content = f.read()
             self.__dict__ = json.loads(content)
         self._load_datamap()
 
     def _save_datamap(self):
+        '''Save just the datamap metadata'''
         for studydate in self.datamap:
             for filemeta in self.datamap[studydate]:
                 # Create study directory if it's not there
@@ -242,6 +254,7 @@ class Timeline:
                     f.write(json.dumps(vars(filemeta)))
 
     def _load_datamap(self):
+        '''Load just the datamap metadata'''
         for studydate in next(os.walk(self.path))[1]:
             self.datamap[studydate] = []
             files = next(os.walk(os.path.join(self.path, studydate)))[2]
@@ -257,6 +270,7 @@ class Timeline:
 
 
     def setup_registration_reference(self):
+        '''Select a registration reference from the image data'''
         from pattools import ants
         print('Setting up registration reference...')
         # Check that we don't already have one
@@ -311,6 +325,7 @@ class Timeline:
             print('done.')
 
     def process_file(self, input_path, output_path, apply_mask=False):
+        '''Process (biascorrect, register, etc.) a single file'''
         # These imports can complain on import, so we'll only get them now.
         from pattools import ants
         with TemporaryDirectory() as tmp_dir:
@@ -331,6 +346,7 @@ class Timeline:
             nib.save(output, output_path)
 
     def process(self):
+        '''Process (bias correct, register to reference, etc.) all image files'''
         if (self.registration_reference == None
             or os.path.exists(os.path.join(self.path, self.registration_reference)) == False
             or self.brain_mask == None
@@ -356,7 +372,7 @@ class Timeline:
  #############################
 
 class _AbstractInterpolator:
-
+    '''Base abstration for interpolators'''
     def interpolate(self, data1, data2, ratio):
         raise Exception("This is the base interpolator class. Use an implementation")
 
@@ -366,6 +382,7 @@ class _AbstractInterpolator:
         return date(int(datestring[0:4]), int(datestring[4:6]), int(datestring[6:]))
 
     def interpolated_data(self, image_paths, mask_path, delta_days=28):
+        ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
         # We only want to yield data2 on the final pair, so we'll need a reference
         data2 = None
         date2 = None
@@ -406,6 +423,7 @@ class _AbstractInterpolator:
         yield (date2, data2)
 
 class LinearInterpolator(_AbstractInterpolator):
+    '''Interpolates data linearly'''
     def __init__(self):
         super().__init__()
 
@@ -413,6 +431,7 @@ class LinearInterpolator(_AbstractInterpolator):
         return data1 * (1-ratio) + data2 * ratio
 
 class NearestNeighbourInterpolator(_AbstractInterpolator):
+    '''Returns the nearest real scan'''
     def __init__(self):
         super().__init__()
 
@@ -425,6 +444,7 @@ class NearestNeighbourInterpolator(_AbstractInterpolator):
  #########################
 
 class Renderer:
+    '''Renders interpolated data to image files.'''
     interpolator = None
     days_delta = None
 
@@ -433,6 +453,7 @@ class Renderer:
         self.days_delta = days_delta
 
     def render(self, timeline, path):
+        '''Write images to path given based on a timeline'''
         filters = [filter.name for filter in timeline.filters]
         for filter in filters:
             files = []
@@ -485,6 +506,7 @@ class Renderer:
         Renderer.write_images(volume, os.path.join(path, 'ax', date.strftime('%Y%m%d')), 'ax', min_val, max_val)
 
     def render_all(self, files, mask_path, path):
+        '''Render all volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
             delayed(Renderer._render_volume)(date, volume, path)
             for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))

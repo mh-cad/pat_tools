@@ -11,10 +11,12 @@ else:
     ANTSPATH = os.environ['ANTSPATH']
 
 def n4_bias_correct(input, output):
+    '''Calls N4BiasFieldCorrection'''
     p = subprocess.Popen([os.path.join(ANTSPATH,'N4BiasFieldCorrection'), '-i', input, '-o', output])
     return p
 
 def affine_registration(floating, fixed, output):
+    '''Calls antsRegistration'''
     p = subprocess.Popen([
         os.path.join(ANTSPATH,'antsRegistration'),
         '--dimensionality','3', # Run ANTS on 3 dimensional image
@@ -32,6 +34,7 @@ def affine_registration(floating, fixed, output):
     return p
 
 def apply_linear_transform(floating, fixed, matrix, output):
+    '''Calls antsApplyTransforms'''
     p = subprocess.Popen([
         os.path.join(ANTSPATH,'antsApplyTransforms'),
         '-d', '3',

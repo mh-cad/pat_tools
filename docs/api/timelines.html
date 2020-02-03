@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.4" />
+<title>pattools.timelines API documentation</title>
+<meta name="description" content="Timelines help organise data longitudinally" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pattools.timelines</code></h1>
+</header>
+<section id="section-intro">
+<p>Timelines help organise data longitudinally</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Timelines help organise data longitudinally&#39;&#39;&#39;
+
+from pattools.pacs import Series, Patient
+from pattools.resources import Atlas
+import nibabel as nib
+import numpy as np
+import multiprocessing
+from joblib import Parallel, delayed
+import json
+import os
+import shutil
+from clint.textui import progress
+from tempfile import TemporaryDirectory
+from datetime import date, timedelta
+import imageio
+
+class ScorecardElement:
+    &#39;&#39;&#39;The scorecard element is used to create a series filter.&#39;&#39;&#39;
+    description = None
+    points = 0
+    def __init__(self, description, points):
+        self.description = description
+        self.points = points
+
+class Filter:
+    &#39;&#39;&#39;The filter class extracts a 0 or 1 series from a study (which math the filter, obvs.)&#39;&#39;&#39;
+    name = None
+    scorecard = None # For matching description
+    min_rows = 100
+    min_cols = 100
+    threshold = 0
+
+    def __init__(self, name):
+        self.name = name
+        self.scorecard = []
+
+    def filter(self, study):
+        &#39;&#39;&#39;Returns the series which best matches the filter, or None if there are no good matches.&#39;&#39;&#39;
+        series = study.find_series()
+        candidates = []
+
+        for seri in series:
+            score = 0
+            # If the description contains a string on the scorecard..
+            for se in self.scorecard:
+                if se.description.lower() in seri.description.lower():
+                    score += se.points #... add to the score
+            if score &gt;= self.threshold:
+                candidates.append((score, seri))
+        # Sort the candidates by score
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        # If theres a candidate, append the best
+        if len(candidates) &gt; 0:
+            return candidates[0][1]
+        # No valid series found
+        return None
+
+
+def flair_filter():
+    &#39;&#39;&#39;Default filter for FLAIR studies&#39;&#39;&#39;
+    filter = Filter(&#39;FLAIR&#39;)
+    filter.scorecard.append(ScorecardElement(&#39;flair&#39;, 100))
+    filter.scorecard.append(ScorecardElement(&#39;mprage&#39;, -100))
+    filter.scorecard.append(ScorecardElement(&#39;localiser&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;sag&#39;, 20))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_tra&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;t2&#39;, 45))
+    filter.scorecard.append(ScorecardElement(&#39;t1&#39;, -45))
+    filter.scorecard.append(ScorecardElement(&#39;3d&#39;, 25))
+    filter.scorecard.append(ScorecardElement(&#39;dis3d&#39;, -25))
+    filter.scorecard.append(ScorecardElement(&#39;report&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;fused&#39;, -35))
+    filter.threshold = 100
+    return filter
+
+def mprage_filter():
+    &#39;&#39;&#39;Default filter for MPRAGE studies&#39;&#39;&#39;
+    filter = Filter(&#39;MPRAGE&#39;)
+    filter.scorecard.append(ScorecardElement(&#39;mprage&#39;, 100))
+    filter.scorecard.append(ScorecardElement(&#39;flair&#39;, -100))
+    filter.scorecard.append(ScorecardElement(&#39;localiser&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;sag&#39;, 20))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_tra&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;t1&#39;, 30))
+    filter.scorecard.append(ScorecardElement(&#39;t2&#39;, -30))
+    filter.scorecard.append(ScorecardElement(&#39;3d&#39;, 25))
+    filter.scorecard.append(ScorecardElement(&#39;dis3d&#39;, -25))
+    filter.scorecard.append(ScorecardElement(&#39;c+&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;report&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;fused&#39;, -35))
+    filter.threshold = 100
+    return filter
+
+def default_filters():
+    &#39;&#39;&#39;Default filter list&#39;&#39;&#39;
+    return [flair_filter(), mprage_filter()]
+
+class FileMetadata:
+    &#39;&#39;&#39;Metadata for a stored image file&#39;&#39;&#39;
+    file = None
+    processed_file = None
+    filter_name = None
+    study_uid = None
+    series_uid = None
+    series_description = None
+
+    def __init__(self, file=None, processed_file=None, filter_name=None, study_uid=None, series_uid=None, series_description=None):
+        self.file = file
+        self.processed_file = processed_file
+        self.filter_name = filter_name
+        self.study_uid = study_uid
+        self.series_uid = series_uid
+        self.series_description = series_description
+
+    def __str__(self):
+        return (
+            &#39;file              : &#39; + str(self.study_uid) +os.linesep+
+            &#39;processed_file    : &#39; + str(self.processed_file) +os.linesep+
+            &#39;filter_name       : &#39; + str(self.filter_name) +os.linesep+
+            &#39;study_uid         : &#39; + str(self.study_uid) +os.linesep+
+            &#39;series_uid        : &#39; + str(self.series_uid) +os.linesep+
+            &#39;series_description: &#39; + str(self.series_description))
+
+    @staticmethod
+    def from_string(string):
+        fm = FileMetadata
+        for line in string.splitlines():
+            if line.startswith(&#39;file&#39;):
+                fm.file = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;processed_file&#39;):
+                fm.processed_file = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;filter_name&#39;):
+                fm.filter_name = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;study_uid&#39;):
+                fm.study_uid = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;series_uid&#39;):
+                fm.series_uid = line.split(&#39;:&#39;)[1].strip()
+            if line.startswith(&#39;series_description&#39;):
+                fm.series_description = line.split(&#39;:&#39;)[1].strip()
+        return fm
+
+class Timeline:
+    &#39;&#39;&#39;The timeline contains filtered lists of scans over a single patient&#39;s history&#39;&#39;&#39;
+    patient_id = None #ID of the Patient in PACS
+    path = None #Path to the root timeline folder
+    start_date = None #First date covered by timeline
+    end_date = None #Last date covered by timeline
+    brain_mask = None #Brain mask which will be used
+    registration_reference = None #Reference scan for registration
+    is_processed = False #Is the pre-processing up to date?
+    is_rendererd = False
+    datamap = {} #In-memory map of the data structure
+    #^^ for now we&#39;ll try to use the file system to guide us
+    filters = default_filters() #Types of scans to include (defaut FLAIR and MPRAGE)
+
+    def __init__(self, path, patient_id=None):
+        self.path = path
+        self.patient_id = patient_id
+        # If we don&#39;t have a patient ID we&#39;re assuming patient id as the folder name
+        if patient_id == None:
+            self.patient_id = os.path.basename(os.path.normpath(path))
+
+        # Try to load from path...
+        if (os.path.isfile(os.path.join(path,&#39;timeline.metadata&#39;))):
+            self.load()
+
+        # If that doesn&#39;t work, try to create from PACS
+        if not os.path.exists(path): os.makedirs(path)
+        self.save()
+
+    def update_from_pacs(self, scp_settings):
+        &#39;&#39;&#39;Populate the Timeline from PACS&#39;&#39;&#39;
+        if scp_settings == None: return
+
+        patient = Patient(self.patient_id, scp_settings)
+        # Do we have new dates?
+        for study in patient.find_studies():
+            study_path = os.path.join(self.path, study.study_date)
+            try:
+                os.mkdir(study_path)
+            except:
+                pass
+
+            # Create a new in-memory data map
+            self.datamap[study.study_date] = []
+            # Get filtered series
+            for filter in self.filters:
+                series = filter.filter(study)
+                if series != None:
+                    data = FileMetadata(file=filter.name + &#34;.nii.gz&#34;)
+                    new_series = True
+                    metadatafile = os.path.join(study_path, data.file + &#39;.metadata&#39;)
+                    # Update existing metadata
+                    if os.path.exists(metadatafile):
+                        with open(metadatafile, &#39;r&#39;) as f:
+                            try:
+                                data.__dict__ = json.loads(f.read())
+                            except:
+                                raise Exception(&#39;Failed to read &#39; + metadatafile)
+                        # If the series has changed, we&#39;ll delete the old one.
+                        if data.series_uid != series.series_uid:
+                            if os.path.exists(os.path.join(study_path, data.file)):
+                                os.remove(os.path.join(study_path, data.file))
+                            if os.path.exists(os.path.join(study_path, data.processed_file)):
+                                os.remove(os.path.join(study_path, data.processed_file))
+                        else:
+                            new_series = False
+                    # If we have a new (or replaced) series, update everything and get the data
+                    if new_series:
+                        data = FileMetadata(
+                            file=filter.name + &#34;.nii.gz&#34;,
+                            processed_file=filter.name + &#34;.processed.nii.gz&#34;,
+                            filter_name=filter.name,
+                            study_uid=series.study_uid,
+                            series_uid=series.series_uid,
+                            series_description=series.description)
+                        self.datamap[study.study_date].append(data)
+                        # Write metadata
+                        with open(metadatafile, &#39;w&#39;) as f:
+                            f.write(json.dumps(vars(data)))
+                            f.flush()
+                        series.save_nifti(os.path.join(study_path,data.file))
+
+        self.is_processed = False
+        self.save()
+
+    def save(self):
+        &#39;&#39;&#39;Save to disk&#39;&#39;&#39;
+        content = json.dumps(vars(self))
+        with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;w&#39;) as f:
+            f.write(content)
+        self._save_datamap()
+
+    def load(self):
+        &#39;&#39;&#39;Load from disk&#39;&#39;&#39;
+        with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;r&#39;) as f:
+            content = f.read()
+            self.__dict__ = json.loads(content)
+        self._load_datamap()
+
+    def _save_datamap(self):
+        &#39;&#39;&#39;Save just the datamap metadata&#39;&#39;&#39;
+        for studydate in self.datamap:
+            for filemeta in self.datamap[studydate]:
+                # Create study directory if it&#39;s not there
+                studypath = os.path.join(self.path, studydate)
+                if not os.path.exists(studypath): os.makedirs(studypath)
+                # Save metadata
+                with open(os.path.join(studypath, filemeta.file + &#39;.metadata&#39;), &#39;w&#39;) as f:
+                    f.write(json.dumps(vars(filemeta)))
+
+    def _load_datamap(self):
+        &#39;&#39;&#39;Load just the datamap metadata&#39;&#39;&#39;
+        for studydate in next(os.walk(self.path))[1]:
+            self.datamap[studydate] = []
+            files = next(os.walk(os.path.join(self.path, studydate)))[2]
+            files = [f for f in files if f.endswith(&#39;.metadata&#39;)]
+            for f in files:
+                with open(os.path.join(self.path, studydate, f), &#39;r&#39;) as f:
+                    filemeta = FileMetadata()
+                    try:
+                        filemeta.__dict__ = json.loads(f.read())
+                        self.datamap[studydate].append(filemeta)
+                    except:
+                        raise Exception(&#39;Failed to read &#39; + os.path.join(self.path, studydate, f))
+
+
+    def setup_registration_reference(self):
+        &#39;&#39;&#39;Select a registration reference from the image data&#39;&#39;&#39;
+        from pattools import ants
+        print(&#39;Setting up registration reference...&#39;)
+        # Check that we don&#39;t already have one
+        if (self.registration_reference != None
+            and os.path.exists(os.path.join(self.path,self.registration_reference))
+            and self.brain_mask != None
+            and os.path.exists(os.path.join(self.path,self.brain_mask))):
+            return
+        # For now we&#39;re just going to go with the biggest image as a proxy for high res
+        largest_file = (None, -1)
+        candidates = []
+        for dir, _, files in os.walk(self.path):
+            for f in files:
+                if (f.endswith(&#39;.nii&#39;) or f.endswith(&#39;.nii.gz&#39;)) and f+&#39;.metadata&#39; in files:
+                    candidates.append(os.path.join(dir, f))
+        candidates.sort(key=lambda c : os.stat(c).st_size)
+        if len(candidates) == 0: return
+        candidate = candidates[int(len(candidates)/3*2)]
+        print(&#39;candidate:&#39;, candidate)
+
+        with TemporaryDirectory() as tmp_dir:
+            #Open atlas
+            atlas_path = &#39;/data/atlas/mni&#39;
+            if not os.path.exists(atlas_path): os.makedirs(atlas_path)
+            atlas = Atlas.MNI.load(atlas_path)
+
+            # save atlas to tmp_dir and mask to timeline
+            t2_path = os.path.join(tmp_dir, &#39;t2.nii.gz&#39;)
+            mask_path = os.path.join(tmp_dir, &#39;mask.nii.gz&#39;)
+
+            nib.save(atlas.t2, t2_path)
+            nib.save(atlas.mask, mask_path)
+
+            # Bias correction and registration
+            print(&#39;        N4 Bias correction for reference image...&#39;)
+            n4_path = os.path.join(self.path, &#39;registration_reference.nii.gz&#39;)
+            out_path = os.path.join(tmp_dir, &#39;waped.nii.gz&#39;)
+            ants.n4_bias_correct(candidate, n4_path).wait()
+
+            print(&#39;        Registering reference image to brain mask...&#39;)
+            ants.affine_registration(t2_path, n4_path, out_path).wait()
+            # Register mask to reference scan
+            affine_mat = out_path + &#39;_0GenericAffine.mat&#39;
+
+            shutil.copyfile(affine_mat, os.path.join(self.path, &#39;atlas2ref.mat&#39;))
+            out_path = os.path.join(self.path, &#39;brain_mask.nii.gz&#39;)
+            ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
+            # Save metadata
+            self.registration_reference = &#39;registration_reference.nii.gz&#39;
+            self.brain_mask = &#39;brain_mask.nii.gz&#39;
+            self.save()
+            print(&#39;done.&#39;)
+
+    def process_file(self, input_path, output_path, apply_mask=False):
+        &#39;&#39;&#39;Process (biascorrect, register, etc.) a single file&#39;&#39;&#39;
+        # These imports can complain on import, so we&#39;ll only get them now.
+        from pattools import ants
+        with TemporaryDirectory() as tmp_dir:
+            input = nib.load(input_path)
+            n4_path = os.path.join(tmp_dir, &#39;n4.nii&#39;)
+            ants.n4_bias_correct(input_path, n4_path).wait()
+
+            ref_path = os.path.join(self.path, self.registration_reference)
+            out_path = os.path.join(tmp_dir, &#39;regout.nii&#39;)
+            ants.affine_registration(n4_path, ref_path, out_path).wait()
+
+            mask = nib.load(os.path.join(self.path, self.brain_mask))
+            output = nib.load(out_path)
+            outdata = output.get_fdata()
+            if apply_mask:
+                outdata *= mask.get_fdata()
+            output = nib.Nifti1Image(outdata, output.affine, output.header)
+            nib.save(output, output_path)
+
+    def process(self):
+        &#39;&#39;&#39;Process (bias correct, register to reference, etc.) all image files&#39;&#39;&#39;
+        if (self.registration_reference == None
+            or os.path.exists(os.path.join(self.path, self.registration_reference)) == False
+            or self.brain_mask == None
+            or os.path.exists(os.path.join(self.path, self.brain_mask)) == False):
+            self.setup_registration_reference()
+
+        files_to_process = []
+        for study in self.datamap:
+            study_path = os.path.join(self.path, study)
+            for filter in self.datamap[study]:
+                if not os.path.exists(os.path.join(study_path,filter.processed_file)):
+                    input = os.path.join(self.path, study, filter.file)
+                    output = os.path.join(self.path, study, filter.processed_file)
+                    files_to_process.append((input, output))
+        # Add a progress bar
+        print(&#39;Processing&#39;, len(files_to_process), &#39;files...&#39;)
+        files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
+        for input, output in files_to_process:
+            self.process_file(input, output)
+
+ #############################
+######## INTERPOLATORS ########
+ #############################
+
+class _AbstractInterpolator:
+    &#39;&#39;&#39;Base abstration for interpolators&#39;&#39;&#39;
+    def interpolate(self, data1, data2, ratio):
+        raise Exception(&#34;This is the base interpolator class. Use an implementation&#34;)
+
+    @staticmethod
+    def _date_from_path(path):
+        datestring = os.path.basename(os.path.dirname(path))
+        return date(int(datestring[0:4]), int(datestring[4:6]), int(datestring[6:]))
+
+    def interpolated_data(self, image_paths, mask_path, delta_days=28):
+        &#39;&#39;&#39; Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.&#39;&#39;&#39;
+        # We only want to yield data2 on the final pair, so we&#39;ll need a reference
+        data2 = None
+        date2 = None
+        for p1, p2 in zip(image_paths[:-1], image_paths[1:]):
+            # Do some error checking...
+            if not os.path.exists(p1):
+                raise Exception(&#39;Path &#39; + p1 + &#39; does not exist&#39;)
+            if not os.path.exists(p2):
+                raise Exception(&#39;Path &#39; + p2 + &#39; does not exist&#39;)
+            if mask_path != None and os.path.exists(mask_path) == False:
+                raise Exception(&#39;Path &#39; + mask_path + &#39; does not exist&#39;)
+
+            # Open the nifti file
+            p1img = nib.load(p1)
+            p2img = nib.load(p2)
+            # Get the data
+            data1 = p1img.get_fdata()
+            data2 = p2img.get_fdata()
+
+            if (mask_path != None):
+                mask_img = nib.load(mask_path)
+                mask_data = mask_img.get_fdata()
+                data1 *= mask_data
+                data2 *= mask_data
+
+            # If each delta represents a step, we calculate how many steps there
+            # are between the current scans
+            date1 = _AbstractInterpolator._date_from_path(p1)
+            date2 = _AbstractInterpolator._date_from_path(p2)
+            window = (date2 - date1)
+            steps = int(window.days / delta_days)
+
+            for i in range(0, steps):
+                ratio = i/steps
+                # Yield interpolated (includes data1, since the ratio range is [0,1)
+                yield (date1 + timedelta(days=int(i * delta_days)), self.interpolate(data1, data2, ratio))
+        # Yield the last series
+        yield (date2, data2)
+
+class LinearInterpolator(_AbstractInterpolator):
+    &#39;&#39;&#39;Interpolates data linearly&#39;&#39;&#39;
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        return data1 * (1-ratio) + data2 * ratio
+
+class NearestNeighbourInterpolator(_AbstractInterpolator):
+    &#39;&#39;&#39;Returns the nearest real scan&#39;&#39;&#39;
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        if ratio &gt;= 0.5: return data2
+        return data1
+
+ #########################
+######## Renderers ########
+ #########################
+
+class Renderer:
+    &#39;&#39;&#39;Renders interpolated data to image files.&#39;&#39;&#39;
+    interpolator = None
+    days_delta = None
+
+    def __init__(self, interpolator=LinearInterpolator(), days_delta=28):
+        self.interpolator = interpolator
+        self.days_delta = days_delta
+
+    def render(self, timeline, path):
+        &#39;&#39;&#39;Write images to path given based on a timeline&#39;&#39;&#39;
+        filters = [filter.name for filter in timeline.filters]
+        for filter in filters:
+            files = []
+            for studydate in timeline.datamap:
+                files.extend([
+                    os.path.join(timeline.path, studydate, f.processed_file)
+                    for f in timeline.datamap[studydate]
+                    if f.filter_name == filter])
+
+            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+
+    @staticmethod
+    def write_images(data, folder, slice_type, min_val, max_val):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        data_cp = np.copy(data)
+        count = 0
+        if slice_type == &#39;sag&#39;:
+            count = data.shape[0]
+            for i in range(data.shape[0]):
+                Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f&#39;{i}.png&#39;), min_val, max_val)
+
+        elif slice_type == &#39;cor&#39;:
+            count = data.shape[1]
+            for j in range(data.shape[1]):
+                Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f&#39;{j}.png&#39;), min_val, max_val)
+
+        elif slice_type == &#39;ax&#39;:
+            count = data.shape[2]
+            for k in range(data.shape[2]):
+                Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f&#39;{k}.png&#39;), min_val, max_val)
+
+        return count
+
+    @staticmethod
+    def write_image(slice, location, min, max):
+        # This is a bit of a hack to make sure the range is normal
+        slice[0,0] = max
+        slice[0,1] = min
+        output = np.flip(slice.T).copy()
+        np.clip(output, min, max)
+        imageio.imwrite(location, output)
+
+    @staticmethod
+    def _render_volume(date, volume, path):
+        min_val = np.amin(volume)
+        max_val = np.amax(volume)
+        Renderer.write_images(volume, os.path.join(path, &#39;sag&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;sag&#39;, min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, &#39;cor&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;cor&#39;, min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, &#39;ax&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;ax&#39;, min_val, max_val)
+
+    def render_all(self, files, mask_path, path):
+        &#39;&#39;&#39;Render all volumes using supplied brain mask&#39;&#39;&#39;
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path)
+            for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pattools.timelines.default_filters"><code class="name flex">
+<span>def <span class="ident">default_filters</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Default filter list</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def default_filters():
+    &#39;&#39;&#39;Default filter list&#39;&#39;&#39;
+    return [flair_filter(), mprage_filter()]</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.flair_filter"><code class="name flex">
+<span>def <span class="ident">flair_filter</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Default filter for FLAIR studies</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def flair_filter():
+    &#39;&#39;&#39;Default filter for FLAIR studies&#39;&#39;&#39;
+    filter = Filter(&#39;FLAIR&#39;)
+    filter.scorecard.append(ScorecardElement(&#39;flair&#39;, 100))
+    filter.scorecard.append(ScorecardElement(&#39;mprage&#39;, -100))
+    filter.scorecard.append(ScorecardElement(&#39;localiser&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;sag&#39;, 20))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_tra&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;t2&#39;, 45))
+    filter.scorecard.append(ScorecardElement(&#39;t1&#39;, -45))
+    filter.scorecard.append(ScorecardElement(&#39;3d&#39;, 25))
+    filter.scorecard.append(ScorecardElement(&#39;dis3d&#39;, -25))
+    filter.scorecard.append(ScorecardElement(&#39;report&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;fused&#39;, -35))
+    filter.threshold = 100
+    return filter</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.mprage_filter"><code class="name flex">
+<span>def <span class="ident">mprage_filter</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Default filter for MPRAGE studies</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mprage_filter():
+    &#39;&#39;&#39;Default filter for MPRAGE studies&#39;&#39;&#39;
+    filter = Filter(&#39;MPRAGE&#39;)
+    filter.scorecard.append(ScorecardElement(&#39;mprage&#39;, 100))
+    filter.scorecard.append(ScorecardElement(&#39;flair&#39;, -100))
+    filter.scorecard.append(ScorecardElement(&#39;localiser&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;sag&#39;, 20))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_tra&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;_cor&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;t1&#39;, 30))
+    filter.scorecard.append(ScorecardElement(&#39;t2&#39;, -30))
+    filter.scorecard.append(ScorecardElement(&#39;3d&#39;, 25))
+    filter.scorecard.append(ScorecardElement(&#39;dis3d&#39;, -25))
+    filter.scorecard.append(ScorecardElement(&#39;c+&#39;, -5))
+    filter.scorecard.append(ScorecardElement(&#39;report&#39;, -50))
+    filter.scorecard.append(ScorecardElement(&#39;fused&#39;, -35))
+    filter.threshold = 100
+    return filter</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pattools.timelines.FileMetadata"><code class="flex name class">
+<span>class <span class="ident">FileMetadata</span></span>
+<span>(</span><span>file=None, processed_file=None, filter_name=None, study_uid=None, series_uid=None, series_description=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Metadata for a stored image file</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileMetadata:
+    &#39;&#39;&#39;Metadata for a stored image file&#39;&#39;&#39;
+    file = None
+    processed_file = None
+    filter_name = None
+    study_uid = None
+    series_uid = None
+    series_description = None
+
+    def __init__(self, file=None, processed_file=None, filter_name=None, study_uid=None, series_uid=None, series_description=None):
+        self.file = file
+        self.processed_file = processed_file
+        self.filter_name = filter_name
+        self.study_uid = study_uid
+        self.series_uid = series_uid
+        self.series_description = series_description
+
+    def __str__(self):
+        return (
+            &#39;file              : &#39; + str(self.study_uid) +os.linesep+
+            &#39;processed_file    : &#39; + str(self.processed_file) +os.linesep+
+            &#39;filter_name       : &#39; + str(self.filter_name) +os.linesep+
+            &#39;study_uid         : &#39; + str(self.study_uid) +os.linesep+
+            &#39;series_uid        : &#39; + str(self.series_uid) +os.linesep+
+            &#39;series_description: &#39; + str(self.series_description))
+
+    @staticmethod
+    def from_string(string):
+        fm = FileMetadata
+        for line in string.splitlines():
+            if line.startswith(&#39;file&#39;):
+                fm.file = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;processed_file&#39;):
+                fm.processed_file = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;filter_name&#39;):
+                fm.filter_name = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;study_uid&#39;):
+                fm.study_uid = line.split(&#39;:&#39;)[1].strip()
+            elif line.startswith(&#39;series_uid&#39;):
+                fm.series_uid = line.split(&#39;:&#39;)[1].strip()
+            if line.startswith(&#39;series_description&#39;):
+                fm.series_description = line.split(&#39;:&#39;)[1].strip()
+        return fm</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.timelines.FileMetadata.file"><code class="name">var <span class="ident">file</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.FileMetadata.filter_name"><code class="name">var <span class="ident">filter_name</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.FileMetadata.processed_file"><code class="name">var <span class="ident">processed_file</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.FileMetadata.series_description"><code class="name">var <span class="ident">series_description</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.FileMetadata.series_uid"><code class="name">var <span class="ident">series_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.FileMetadata.study_uid"><code class="name">var <span class="ident">study_uid</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.timelines.FileMetadata.from_string"><code class="name flex">
+<span>def <span class="ident">from_string</span></span>(<span>string)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def from_string(string):
+    fm = FileMetadata
+    for line in string.splitlines():
+        if line.startswith(&#39;file&#39;):
+            fm.file = line.split(&#39;:&#39;)[1].strip()
+        elif line.startswith(&#39;processed_file&#39;):
+            fm.processed_file = line.split(&#39;:&#39;)[1].strip()
+        elif line.startswith(&#39;filter_name&#39;):
+            fm.filter_name = line.split(&#39;:&#39;)[1].strip()
+        elif line.startswith(&#39;study_uid&#39;):
+            fm.study_uid = line.split(&#39;:&#39;)[1].strip()
+        elif line.startswith(&#39;series_uid&#39;):
+            fm.series_uid = line.split(&#39;:&#39;)[1].strip()
+        if line.startswith(&#39;series_description&#39;):
+            fm.series_description = line.split(&#39;:&#39;)[1].strip()
+    return fm</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.Filter"><code class="flex name class">
+<span>class <span class="ident">Filter</span></span>
+<span>(</span><span>name)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>The filter class extracts a 0 or 1 series from a study (which math the filter, obvs.)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Filter:
+    &#39;&#39;&#39;The filter class extracts a 0 or 1 series from a study (which math the filter, obvs.)&#39;&#39;&#39;
+    name = None
+    scorecard = None # For matching description
+    min_rows = 100
+    min_cols = 100
+    threshold = 0
+
+    def __init__(self, name):
+        self.name = name
+        self.scorecard = []
+
+    def filter(self, study):
+        &#39;&#39;&#39;Returns the series which best matches the filter, or None if there are no good matches.&#39;&#39;&#39;
+        series = study.find_series()
+        candidates = []
+
+        for seri in series:
+            score = 0
+            # If the description contains a string on the scorecard..
+            for se in self.scorecard:
+                if se.description.lower() in seri.description.lower():
+                    score += se.points #... add to the score
+            if score &gt;= self.threshold:
+                candidates.append((score, seri))
+        # Sort the candidates by score
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        # If theres a candidate, append the best
+        if len(candidates) &gt; 0:
+            return candidates[0][1]
+        # No valid series found
+        return None</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.timelines.Filter.min_cols"><code class="name">var <span class="ident">min_cols</span></code></dt>
+<dd>
+<section class="desc"><p>int([x]) -&gt; integer
+int(x, base=10) -&gt; integer</p>
+<p>Convert a number or string to an integer, or return 0 if no arguments
+are given.
+If x is a number, return x.<strong>int</strong>().
+For floating point
+numbers, this truncates towards zero.</p>
+<p>If x is not a number or if base is given, then x must be a string,
+bytes, or bytearray instance representing an integer literal in the
+given base.
+The literal can be preceded by '+' or '-' and be surrounded
+by whitespace.
+The base defaults to 10.
+Valid bases are 0 and 2-36.
+Base 0 means to interpret the base from the string as an integer literal.</p>
+<pre><code>&gt;&gt;&gt; int('0b100', base=0)
+4
+</code></pre></section>
+</dd>
+<dt id="pattools.timelines.Filter.min_rows"><code class="name">var <span class="ident">min_rows</span></code></dt>
+<dd>
+<section class="desc"><p>int([x]) -&gt; integer
+int(x, base=10) -&gt; integer</p>
+<p>Convert a number or string to an integer, or return 0 if no arguments
+are given.
+If x is a number, return x.<strong>int</strong>().
+For floating point
+numbers, this truncates towards zero.</p>
+<p>If x is not a number or if base is given, then x must be a string,
+bytes, or bytearray instance representing an integer literal in the
+given base.
+The literal can be preceded by '+' or '-' and be surrounded
+by whitespace.
+The base defaults to 10.
+Valid bases are 0 and 2-36.
+Base 0 means to interpret the base from the string as an integer literal.</p>
+<pre><code>&gt;&gt;&gt; int('0b100', base=0)
+4
+</code></pre></section>
+</dd>
+<dt id="pattools.timelines.Filter.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Filter.scorecard"><code class="name">var <span class="ident">scorecard</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Filter.threshold"><code class="name">var <span class="ident">threshold</span></code></dt>
+<dd>
+<section class="desc"><p>int([x]) -&gt; integer
+int(x, base=10) -&gt; integer</p>
+<p>Convert a number or string to an integer, or return 0 if no arguments
+are given.
+If x is a number, return x.<strong>int</strong>().
+For floating point
+numbers, this truncates towards zero.</p>
+<p>If x is not a number or if base is given, then x must be a string,
+bytes, or bytearray instance representing an integer literal in the
+given base.
+The literal can be preceded by '+' or '-' and be surrounded
+by whitespace.
+The base defaults to 10.
+Valid bases are 0 and 2-36.
+Base 0 means to interpret the base from the string as an integer literal.</p>
+<pre><code>&gt;&gt;&gt; int('0b100', base=0)
+4
+</code></pre></section>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.timelines.Filter.filter"><code class="name flex">
+<span>def <span class="ident">filter</span></span>(<span>self, study)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Returns the series which best matches the filter, or None if there are no good matches.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def filter(self, study):
+    &#39;&#39;&#39;Returns the series which best matches the filter, or None if there are no good matches.&#39;&#39;&#39;
+    series = study.find_series()
+    candidates = []
+
+    for seri in series:
+        score = 0
+        # If the description contains a string on the scorecard..
+        for se in self.scorecard:
+            if se.description.lower() in seri.description.lower():
+                score += se.points #... add to the score
+        if score &gt;= self.threshold:
+            candidates.append((score, seri))
+    # Sort the candidates by score
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    # If theres a candidate, append the best
+    if len(candidates) &gt; 0:
+        return candidates[0][1]
+    # No valid series found
+    return None</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.LinearInterpolator"><code class="flex name class">
+<span>class <span class="ident">LinearInterpolator</span></span>
+</code></dt>
+<dd>
+<section class="desc"><p>Interpolates data linearly</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LinearInterpolator(_AbstractInterpolator):
+    &#39;&#39;&#39;Interpolates data linearly&#39;&#39;&#39;
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        return data1 * (1-ratio) + data2 * ratio</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pattools.timelines._AbstractInterpolator</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.timelines.LinearInterpolator.interpolate"><code class="name flex">
+<span>def <span class="ident">interpolate</span></span>(<span>self, data1, data2, ratio)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def interpolate(self, data1, data2, ratio):
+    return data1 * (1-ratio) + data2 * ratio</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.NearestNeighbourInterpolator"><code class="flex name class">
+<span>class <span class="ident">NearestNeighbourInterpolator</span></span>
+</code></dt>
+<dd>
+<section class="desc"><p>Returns the nearest real scan</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NearestNeighbourInterpolator(_AbstractInterpolator):
+    &#39;&#39;&#39;Returns the nearest real scan&#39;&#39;&#39;
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        if ratio &gt;= 0.5: return data2
+        return data1</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pattools.timelines._AbstractInterpolator</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.timelines.NearestNeighbourInterpolator.interpolate"><code class="name flex">
+<span>def <span class="ident">interpolate</span></span>(<span>self, data1, data2, ratio)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def interpolate(self, data1, data2, ratio):
+    if ratio &gt;= 0.5: return data2
+    return data1</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.Renderer"><code class="flex name class">
+<span>class <span class="ident">Renderer</span></span>
+<span>(</span><span>interpolator=&lt;pattools.timelines.LinearInterpolator object&gt;, days_delta=28)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Renders interpolated data to image files.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Renderer:
+    &#39;&#39;&#39;Renders interpolated data to image files.&#39;&#39;&#39;
+    interpolator = None
+    days_delta = None
+
+    def __init__(self, interpolator=LinearInterpolator(), days_delta=28):
+        self.interpolator = interpolator
+        self.days_delta = days_delta
+
+    def render(self, timeline, path):
+        &#39;&#39;&#39;Write images to path given based on a timeline&#39;&#39;&#39;
+        filters = [filter.name for filter in timeline.filters]
+        for filter in filters:
+            files = []
+            for studydate in timeline.datamap:
+                files.extend([
+                    os.path.join(timeline.path, studydate, f.processed_file)
+                    for f in timeline.datamap[studydate]
+                    if f.filter_name == filter])
+
+            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+
+    @staticmethod
+    def write_images(data, folder, slice_type, min_val, max_val):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        data_cp = np.copy(data)
+        count = 0
+        if slice_type == &#39;sag&#39;:
+            count = data.shape[0]
+            for i in range(data.shape[0]):
+                Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f&#39;{i}.png&#39;), min_val, max_val)
+
+        elif slice_type == &#39;cor&#39;:
+            count = data.shape[1]
+            for j in range(data.shape[1]):
+                Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f&#39;{j}.png&#39;), min_val, max_val)
+
+        elif slice_type == &#39;ax&#39;:
+            count = data.shape[2]
+            for k in range(data.shape[2]):
+                Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f&#39;{k}.png&#39;), min_val, max_val)
+
+        return count
+
+    @staticmethod
+    def write_image(slice, location, min, max):
+        # This is a bit of a hack to make sure the range is normal
+        slice[0,0] = max
+        slice[0,1] = min
+        output = np.flip(slice.T).copy()
+        np.clip(output, min, max)
+        imageio.imwrite(location, output)
+
+    @staticmethod
+    def _render_volume(date, volume, path):
+        min_val = np.amin(volume)
+        max_val = np.amax(volume)
+        Renderer.write_images(volume, os.path.join(path, &#39;sag&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;sag&#39;, min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, &#39;cor&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;cor&#39;, min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, &#39;ax&#39;, date.strftime(&#39;%Y%m%d&#39;)), &#39;ax&#39;, min_val, max_val)
+
+    def render_all(self, files, mask_path, path):
+        &#39;&#39;&#39;Render all volumes using supplied brain mask&#39;&#39;&#39;
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path)
+            for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.timelines.Renderer.days_delta"><code class="name">var <span class="ident">days_delta</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Renderer.interpolator"><code class="name">var <span class="ident">interpolator</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="pattools.timelines.Renderer.write_image"><code class="name flex">
+<span>def <span class="ident">write_image</span></span>(<span>slice, location, min, max)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def write_image(slice, location, min, max):
+    # This is a bit of a hack to make sure the range is normal
+    slice[0,0] = max
+    slice[0,1] = min
+    output = np.flip(slice.T).copy()
+    np.clip(output, min, max)
+    imageio.imwrite(location, output)</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Renderer.write_images"><code class="name flex">
+<span>def <span class="ident">write_images</span></span>(<span>data, folder, slice_type, min_val, max_val)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def write_images(data, folder, slice_type, min_val, max_val):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    data_cp = np.copy(data)
+    count = 0
+    if slice_type == &#39;sag&#39;:
+        count = data.shape[0]
+        for i in range(data.shape[0]):
+            Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f&#39;{i}.png&#39;), min_val, max_val)
+
+    elif slice_type == &#39;cor&#39;:
+        count = data.shape[1]
+        for j in range(data.shape[1]):
+            Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f&#39;{j}.png&#39;), min_val, max_val)
+
+    elif slice_type == &#39;ax&#39;:
+        count = data.shape[2]
+        for k in range(data.shape[2]):
+            Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f&#39;{k}.png&#39;), min_val, max_val)
+
+    return count</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.timelines.Renderer.render"><code class="name flex">
+<span>def <span class="ident">render</span></span>(<span>self, timeline, path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Write images to path given based on a timeline</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def render(self, timeline, path):
+    &#39;&#39;&#39;Write images to path given based on a timeline&#39;&#39;&#39;
+    filters = [filter.name for filter in timeline.filters]
+    for filter in filters:
+        files = []
+        for studydate in timeline.datamap:
+            files.extend([
+                os.path.join(timeline.path, studydate, f.processed_file)
+                for f in timeline.datamap[studydate]
+                if f.filter_name == filter])
+
+        self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Renderer.render_all"><code class="name flex">
+<span>def <span class="ident">render_all</span></span>(<span>self, files, mask_path, path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Render all volumes using supplied brain mask</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def render_all(self, files, mask_path, path):
+    &#39;&#39;&#39;Render all volumes using supplied brain mask&#39;&#39;&#39;
+    Parallel(n_jobs=multiprocessing.cpu_count())(
+        delayed(Renderer._render_volume)(date, volume, path)
+        for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.ScorecardElement"><code class="flex name class">
+<span>class <span class="ident">ScorecardElement</span></span>
+<span>(</span><span>description, points)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>The scorecard element is used to create a series filter.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ScorecardElement:
+    &#39;&#39;&#39;The scorecard element is used to create a series filter.&#39;&#39;&#39;
+    description = None
+    points = 0
+    def __init__(self, description, points):
+        self.description = description
+        self.points = points</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.timelines.ScorecardElement.description"><code class="name">var <span class="ident">description</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.ScorecardElement.points"><code class="name">var <span class="ident">points</span></code></dt>
+<dd>
+<section class="desc"><p>int([x]) -&gt; integer
+int(x, base=10) -&gt; integer</p>
+<p>Convert a number or string to an integer, or return 0 if no arguments
+are given.
+If x is a number, return x.<strong>int</strong>().
+For floating point
+numbers, this truncates towards zero.</p>
+<p>If x is not a number or if base is given, then x must be a string,
+bytes, or bytearray instance representing an integer literal in the
+given base.
+The literal can be preceded by '+' or '-' and be surrounded
+by whitespace.
+The base defaults to 10.
+Valid bases are 0 and 2-36.
+Base 0 means to interpret the base from the string as an integer literal.</p>
+<pre><code>&gt;&gt;&gt; int('0b100', base=0)
+4
+</code></pre></section>
+</dd>
+</dl>
+</dd>
+<dt id="pattools.timelines.Timeline"><code class="flex name class">
+<span>class <span class="ident">Timeline</span></span>
+<span>(</span><span>path, patient_id=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>The timeline contains filtered lists of scans over a single patient's history</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Timeline:
+    &#39;&#39;&#39;The timeline contains filtered lists of scans over a single patient&#39;s history&#39;&#39;&#39;
+    patient_id = None #ID of the Patient in PACS
+    path = None #Path to the root timeline folder
+    start_date = None #First date covered by timeline
+    end_date = None #Last date covered by timeline
+    brain_mask = None #Brain mask which will be used
+    registration_reference = None #Reference scan for registration
+    is_processed = False #Is the pre-processing up to date?
+    is_rendererd = False
+    datamap = {} #In-memory map of the data structure
+    #^^ for now we&#39;ll try to use the file system to guide us
+    filters = default_filters() #Types of scans to include (defaut FLAIR and MPRAGE)
+
+    def __init__(self, path, patient_id=None):
+        self.path = path
+        self.patient_id = patient_id
+        # If we don&#39;t have a patient ID we&#39;re assuming patient id as the folder name
+        if patient_id == None:
+            self.patient_id = os.path.basename(os.path.normpath(path))
+
+        # Try to load from path...
+        if (os.path.isfile(os.path.join(path,&#39;timeline.metadata&#39;))):
+            self.load()
+
+        # If that doesn&#39;t work, try to create from PACS
+        if not os.path.exists(path): os.makedirs(path)
+        self.save()
+
+    def update_from_pacs(self, scp_settings):
+        &#39;&#39;&#39;Populate the Timeline from PACS&#39;&#39;&#39;
+        if scp_settings == None: return
+
+        patient = Patient(self.patient_id, scp_settings)
+        # Do we have new dates?
+        for study in patient.find_studies():
+            study_path = os.path.join(self.path, study.study_date)
+            try:
+                os.mkdir(study_path)
+            except:
+                pass
+
+            # Create a new in-memory data map
+            self.datamap[study.study_date] = []
+            # Get filtered series
+            for filter in self.filters:
+                series = filter.filter(study)
+                if series != None:
+                    data = FileMetadata(file=filter.name + &#34;.nii.gz&#34;)
+                    new_series = True
+                    metadatafile = os.path.join(study_path, data.file + &#39;.metadata&#39;)
+                    # Update existing metadata
+                    if os.path.exists(metadatafile):
+                        with open(metadatafile, &#39;r&#39;) as f:
+                            try:
+                                data.__dict__ = json.loads(f.read())
+                            except:
+                                raise Exception(&#39;Failed to read &#39; + metadatafile)
+                        # If the series has changed, we&#39;ll delete the old one.
+                        if data.series_uid != series.series_uid:
+                            if os.path.exists(os.path.join(study_path, data.file)):
+                                os.remove(os.path.join(study_path, data.file))
+                            if os.path.exists(os.path.join(study_path, data.processed_file)):
+                                os.remove(os.path.join(study_path, data.processed_file))
+                        else:
+                            new_series = False
+                    # If we have a new (or replaced) series, update everything and get the data
+                    if new_series:
+                        data = FileMetadata(
+                            file=filter.name + &#34;.nii.gz&#34;,
+                            processed_file=filter.name + &#34;.processed.nii.gz&#34;,
+                            filter_name=filter.name,
+                            study_uid=series.study_uid,
+                            series_uid=series.series_uid,
+                            series_description=series.description)
+                        self.datamap[study.study_date].append(data)
+                        # Write metadata
+                        with open(metadatafile, &#39;w&#39;) as f:
+                            f.write(json.dumps(vars(data)))
+                            f.flush()
+                        series.save_nifti(os.path.join(study_path,data.file))
+
+        self.is_processed = False
+        self.save()
+
+    def save(self):
+        &#39;&#39;&#39;Save to disk&#39;&#39;&#39;
+        content = json.dumps(vars(self))
+        with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;w&#39;) as f:
+            f.write(content)
+        self._save_datamap()
+
+    def load(self):
+        &#39;&#39;&#39;Load from disk&#39;&#39;&#39;
+        with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;r&#39;) as f:
+            content = f.read()
+            self.__dict__ = json.loads(content)
+        self._load_datamap()
+
+    def _save_datamap(self):
+        &#39;&#39;&#39;Save just the datamap metadata&#39;&#39;&#39;
+        for studydate in self.datamap:
+            for filemeta in self.datamap[studydate]:
+                # Create study directory if it&#39;s not there
+                studypath = os.path.join(self.path, studydate)
+                if not os.path.exists(studypath): os.makedirs(studypath)
+                # Save metadata
+                with open(os.path.join(studypath, filemeta.file + &#39;.metadata&#39;), &#39;w&#39;) as f:
+                    f.write(json.dumps(vars(filemeta)))
+
+    def _load_datamap(self):
+        &#39;&#39;&#39;Load just the datamap metadata&#39;&#39;&#39;
+        for studydate in next(os.walk(self.path))[1]:
+            self.datamap[studydate] = []
+            files = next(os.walk(os.path.join(self.path, studydate)))[2]
+            files = [f for f in files if f.endswith(&#39;.metadata&#39;)]
+            for f in files:
+                with open(os.path.join(self.path, studydate, f), &#39;r&#39;) as f:
+                    filemeta = FileMetadata()
+                    try:
+                        filemeta.__dict__ = json.loads(f.read())
+                        self.datamap[studydate].append(filemeta)
+                    except:
+                        raise Exception(&#39;Failed to read &#39; + os.path.join(self.path, studydate, f))
+
+
+    def setup_registration_reference(self):
+        &#39;&#39;&#39;Select a registration reference from the image data&#39;&#39;&#39;
+        from pattools import ants
+        print(&#39;Setting up registration reference...&#39;)
+        # Check that we don&#39;t already have one
+        if (self.registration_reference != None
+            and os.path.exists(os.path.join(self.path,self.registration_reference))
+            and self.brain_mask != None
+            and os.path.exists(os.path.join(self.path,self.brain_mask))):
+            return
+        # For now we&#39;re just going to go with the biggest image as a proxy for high res
+        largest_file = (None, -1)
+        candidates = []
+        for dir, _, files in os.walk(self.path):
+            for f in files:
+                if (f.endswith(&#39;.nii&#39;) or f.endswith(&#39;.nii.gz&#39;)) and f+&#39;.metadata&#39; in files:
+                    candidates.append(os.path.join(dir, f))
+        candidates.sort(key=lambda c : os.stat(c).st_size)
+        if len(candidates) == 0: return
+        candidate = candidates[int(len(candidates)/3*2)]
+        print(&#39;candidate:&#39;, candidate)
+
+        with TemporaryDirectory() as tmp_dir:
+            #Open atlas
+            atlas_path = &#39;/data/atlas/mni&#39;
+            if not os.path.exists(atlas_path): os.makedirs(atlas_path)
+            atlas = Atlas.MNI.load(atlas_path)
+
+            # save atlas to tmp_dir and mask to timeline
+            t2_path = os.path.join(tmp_dir, &#39;t2.nii.gz&#39;)
+            mask_path = os.path.join(tmp_dir, &#39;mask.nii.gz&#39;)
+
+            nib.save(atlas.t2, t2_path)
+            nib.save(atlas.mask, mask_path)
+
+            # Bias correction and registration
+            print(&#39;        N4 Bias correction for reference image...&#39;)
+            n4_path = os.path.join(self.path, &#39;registration_reference.nii.gz&#39;)
+            out_path = os.path.join(tmp_dir, &#39;waped.nii.gz&#39;)
+            ants.n4_bias_correct(candidate, n4_path).wait()
+
+            print(&#39;        Registering reference image to brain mask...&#39;)
+            ants.affine_registration(t2_path, n4_path, out_path).wait()
+            # Register mask to reference scan
+            affine_mat = out_path + &#39;_0GenericAffine.mat&#39;
+
+            shutil.copyfile(affine_mat, os.path.join(self.path, &#39;atlas2ref.mat&#39;))
+            out_path = os.path.join(self.path, &#39;brain_mask.nii.gz&#39;)
+            ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
+            # Save metadata
+            self.registration_reference = &#39;registration_reference.nii.gz&#39;
+            self.brain_mask = &#39;brain_mask.nii.gz&#39;
+            self.save()
+            print(&#39;done.&#39;)
+
+    def process_file(self, input_path, output_path, apply_mask=False):
+        &#39;&#39;&#39;Process (biascorrect, register, etc.) a single file&#39;&#39;&#39;
+        # These imports can complain on import, so we&#39;ll only get them now.
+        from pattools import ants
+        with TemporaryDirectory() as tmp_dir:
+            input = nib.load(input_path)
+            n4_path = os.path.join(tmp_dir, &#39;n4.nii&#39;)
+            ants.n4_bias_correct(input_path, n4_path).wait()
+
+            ref_path = os.path.join(self.path, self.registration_reference)
+            out_path = os.path.join(tmp_dir, &#39;regout.nii&#39;)
+            ants.affine_registration(n4_path, ref_path, out_path).wait()
+
+            mask = nib.load(os.path.join(self.path, self.brain_mask))
+            output = nib.load(out_path)
+            outdata = output.get_fdata()
+            if apply_mask:
+                outdata *= mask.get_fdata()
+            output = nib.Nifti1Image(outdata, output.affine, output.header)
+            nib.save(output, output_path)
+
+    def process(self):
+        &#39;&#39;&#39;Process (bias correct, register to reference, etc.) all image files&#39;&#39;&#39;
+        if (self.registration_reference == None
+            or os.path.exists(os.path.join(self.path, self.registration_reference)) == False
+            or self.brain_mask == None
+            or os.path.exists(os.path.join(self.path, self.brain_mask)) == False):
+            self.setup_registration_reference()
+
+        files_to_process = []
+        for study in self.datamap:
+            study_path = os.path.join(self.path, study)
+            for filter in self.datamap[study]:
+                if not os.path.exists(os.path.join(study_path,filter.processed_file)):
+                    input = os.path.join(self.path, study, filter.file)
+                    output = os.path.join(self.path, study, filter.processed_file)
+                    files_to_process.append((input, output))
+        # Add a progress bar
+        print(&#39;Processing&#39;, len(files_to_process), &#39;files...&#39;)
+        files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
+        for input, output in files_to_process:
+            self.process_file(input, output)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pattools.timelines.Timeline.brain_mask"><code class="name">var <span class="ident">brain_mask</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Timeline.datamap"><code class="name">var <span class="ident">datamap</span></code></dt>
+<dd>
+<section class="desc"><p>dict() -&gt; new empty dictionary
+dict(mapping) -&gt; new dictionary initialized from a mapping object's
+(key, value) pairs
+dict(iterable) -&gt; new dictionary initialized as if via:
+d = {}
+for k, v in iterable:
+d[k] = v
+dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
+in the keyword argument list.
+For example:
+dict(one=1, two=2)</p></section>
+</dd>
+<dt id="pattools.timelines.Timeline.end_date"><code class="name">var <span class="ident">end_date</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Timeline.filters"><code class="name">var <span class="ident">filters</span></code></dt>
+<dd>
+<section class="desc"><p>Built-in mutable sequence.</p>
+<p>If no argument is given, the constructor creates a new empty list.
+The argument must be an iterable if specified.</p></section>
+</dd>
+<dt id="pattools.timelines.Timeline.is_processed"><code class="name">var <span class="ident">is_processed</span></code></dt>
+<dd>
+<section class="desc"><p>bool(x) -&gt; bool</p>
+<p>Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.</p></section>
+</dd>
+<dt id="pattools.timelines.Timeline.is_rendererd"><code class="name">var <span class="ident">is_rendererd</span></code></dt>
+<dd>
+<section class="desc"><p>bool(x) -&gt; bool</p>
+<p>Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.</p></section>
+</dd>
+<dt id="pattools.timelines.Timeline.path"><code class="name">var <span class="ident">path</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Timeline.patient_id"><code class="name">var <span class="ident">patient_id</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Timeline.registration_reference"><code class="name">var <span class="ident">registration_reference</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="pattools.timelines.Timeline.start_date"><code class="name">var <span class="ident">start_date</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pattools.timelines.Timeline.load"><code class="name flex">
+<span>def <span class="ident">load</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Load from disk</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load(self):
+    &#39;&#39;&#39;Load from disk&#39;&#39;&#39;
+    with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;r&#39;) as f:
+        content = f.read()
+        self.__dict__ = json.loads(content)
+    self._load_datamap()</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Timeline.process"><code class="name flex">
+<span>def <span class="ident">process</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Process (bias correct, register to reference, etc.) all image files</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process(self):
+    &#39;&#39;&#39;Process (bias correct, register to reference, etc.) all image files&#39;&#39;&#39;
+    if (self.registration_reference == None
+        or os.path.exists(os.path.join(self.path, self.registration_reference)) == False
+        or self.brain_mask == None
+        or os.path.exists(os.path.join(self.path, self.brain_mask)) == False):
+        self.setup_registration_reference()
+
+    files_to_process = []
+    for study in self.datamap:
+        study_path = os.path.join(self.path, study)
+        for filter in self.datamap[study]:
+            if not os.path.exists(os.path.join(study_path,filter.processed_file)):
+                input = os.path.join(self.path, study, filter.file)
+                output = os.path.join(self.path, study, filter.processed_file)
+                files_to_process.append((input, output))
+    # Add a progress bar
+    print(&#39;Processing&#39;, len(files_to_process), &#39;files...&#39;)
+    files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
+    for input, output in files_to_process:
+        self.process_file(input, output)</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Timeline.process_file"><code class="name flex">
+<span>def <span class="ident">process_file</span></span>(<span>self, input_path, output_path, apply_mask=False)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Process (biascorrect, register, etc.) a single file</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process_file(self, input_path, output_path, apply_mask=False):
+    &#39;&#39;&#39;Process (biascorrect, register, etc.) a single file&#39;&#39;&#39;
+    # These imports can complain on import, so we&#39;ll only get them now.
+    from pattools import ants
+    with TemporaryDirectory() as tmp_dir:
+        input = nib.load(input_path)
+        n4_path = os.path.join(tmp_dir, &#39;n4.nii&#39;)
+        ants.n4_bias_correct(input_path, n4_path).wait()
+
+        ref_path = os.path.join(self.path, self.registration_reference)
+        out_path = os.path.join(tmp_dir, &#39;regout.nii&#39;)
+        ants.affine_registration(n4_path, ref_path, out_path).wait()
+
+        mask = nib.load(os.path.join(self.path, self.brain_mask))
+        output = nib.load(out_path)
+        outdata = output.get_fdata()
+        if apply_mask:
+            outdata *= mask.get_fdata()
+        output = nib.Nifti1Image(outdata, output.affine, output.header)
+        nib.save(output, output_path)</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Timeline.save"><code class="name flex">
+<span>def <span class="ident">save</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Save to disk</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save(self):
+    &#39;&#39;&#39;Save to disk&#39;&#39;&#39;
+    content = json.dumps(vars(self))
+    with open(os.path.join(self.path, &#39;timeline.metadata&#39;), &#39;w&#39;) as f:
+        f.write(content)
+    self._save_datamap()</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Timeline.setup_registration_reference"><code class="name flex">
+<span>def <span class="ident">setup_registration_reference</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Select a registration reference from the image data</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def setup_registration_reference(self):
+    &#39;&#39;&#39;Select a registration reference from the image data&#39;&#39;&#39;
+    from pattools import ants
+    print(&#39;Setting up registration reference...&#39;)
+    # Check that we don&#39;t already have one
+    if (self.registration_reference != None
+        and os.path.exists(os.path.join(self.path,self.registration_reference))
+        and self.brain_mask != None
+        and os.path.exists(os.path.join(self.path,self.brain_mask))):
+        return
+    # For now we&#39;re just going to go with the biggest image as a proxy for high res
+    largest_file = (None, -1)
+    candidates = []
+    for dir, _, files in os.walk(self.path):
+        for f in files:
+            if (f.endswith(&#39;.nii&#39;) or f.endswith(&#39;.nii.gz&#39;)) and f+&#39;.metadata&#39; in files:
+                candidates.append(os.path.join(dir, f))
+    candidates.sort(key=lambda c : os.stat(c).st_size)
+    if len(candidates) == 0: return
+    candidate = candidates[int(len(candidates)/3*2)]
+    print(&#39;candidate:&#39;, candidate)
+
+    with TemporaryDirectory() as tmp_dir:
+        #Open atlas
+        atlas_path = &#39;/data/atlas/mni&#39;
+        if not os.path.exists(atlas_path): os.makedirs(atlas_path)
+        atlas = Atlas.MNI.load(atlas_path)
+
+        # save atlas to tmp_dir and mask to timeline
+        t2_path = os.path.join(tmp_dir, &#39;t2.nii.gz&#39;)
+        mask_path = os.path.join(tmp_dir, &#39;mask.nii.gz&#39;)
+
+        nib.save(atlas.t2, t2_path)
+        nib.save(atlas.mask, mask_path)
+
+        # Bias correction and registration
+        print(&#39;        N4 Bias correction for reference image...&#39;)
+        n4_path = os.path.join(self.path, &#39;registration_reference.nii.gz&#39;)
+        out_path = os.path.join(tmp_dir, &#39;waped.nii.gz&#39;)
+        ants.n4_bias_correct(candidate, n4_path).wait()
+
+        print(&#39;        Registering reference image to brain mask...&#39;)
+        ants.affine_registration(t2_path, n4_path, out_path).wait()
+        # Register mask to reference scan
+        affine_mat = out_path + &#39;_0GenericAffine.mat&#39;
+
+        shutil.copyfile(affine_mat, os.path.join(self.path, &#39;atlas2ref.mat&#39;))
+        out_path = os.path.join(self.path, &#39;brain_mask.nii.gz&#39;)
+        ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
+        # Save metadata
+        self.registration_reference = &#39;registration_reference.nii.gz&#39;
+        self.brain_mask = &#39;brain_mask.nii.gz&#39;
+        self.save()
+        print(&#39;done.&#39;)</code></pre>
+</details>
+</dd>
+<dt id="pattools.timelines.Timeline.update_from_pacs"><code class="name flex">
+<span>def <span class="ident">update_from_pacs</span></span>(<span>self, scp_settings)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Populate the Timeline from PACS</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_from_pacs(self, scp_settings):
+    &#39;&#39;&#39;Populate the Timeline from PACS&#39;&#39;&#39;
+    if scp_settings == None: return
+
+    patient = Patient(self.patient_id, scp_settings)
+    # Do we have new dates?
+    for study in patient.find_studies():
+        study_path = os.path.join(self.path, study.study_date)
+        try:
+            os.mkdir(study_path)
+        except:
+            pass
+
+        # Create a new in-memory data map
+        self.datamap[study.study_date] = []
+        # Get filtered series
+        for filter in self.filters:
+            series = filter.filter(study)
+            if series != None:
+                data = FileMetadata(file=filter.name + &#34;.nii.gz&#34;)
+                new_series = True
+                metadatafile = os.path.join(study_path, data.file + &#39;.metadata&#39;)
+                # Update existing metadata
+                if os.path.exists(metadatafile):
+                    with open(metadatafile, &#39;r&#39;) as f:
+                        try:
+                            data.__dict__ = json.loads(f.read())
+                        except:
+                            raise Exception(&#39;Failed to read &#39; + metadatafile)
+                    # If the series has changed, we&#39;ll delete the old one.
+                    if data.series_uid != series.series_uid:
+                        if os.path.exists(os.path.join(study_path, data.file)):
+                            os.remove(os.path.join(study_path, data.file))
+                        if os.path.exists(os.path.join(study_path, data.processed_file)):
+                            os.remove(os.path.join(study_path, data.processed_file))
+                    else:
+                        new_series = False
+                # If we have a new (or replaced) series, update everything and get the data
+                if new_series:
+                    data = FileMetadata(
+                        file=filter.name + &#34;.nii.gz&#34;,
+                        processed_file=filter.name + &#34;.processed.nii.gz&#34;,
+                        filter_name=filter.name,
+                        study_uid=series.study_uid,
+                        series_uid=series.series_uid,
+                        series_description=series.description)
+                    self.datamap[study.study_date].append(data)
+                    # Write metadata
+                    with open(metadatafile, &#39;w&#39;) as f:
+                        f.write(json.dumps(vars(data)))
+                        f.flush()
+                    series.save_nifti(os.path.join(study_path,data.file))
+
+    self.is_processed = False
+    self.save()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pattools" href="index.html">pattools</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pattools.timelines.default_filters" href="#pattools.timelines.default_filters">default_filters</a></code></li>
+<li><code><a title="pattools.timelines.flair_filter" href="#pattools.timelines.flair_filter">flair_filter</a></code></li>
+<li><code><a title="pattools.timelines.mprage_filter" href="#pattools.timelines.mprage_filter">mprage_filter</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pattools.timelines.FileMetadata" href="#pattools.timelines.FileMetadata">FileMetadata</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.timelines.FileMetadata.file" href="#pattools.timelines.FileMetadata.file">file</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.filter_name" href="#pattools.timelines.FileMetadata.filter_name">filter_name</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.from_string" href="#pattools.timelines.FileMetadata.from_string">from_string</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.processed_file" href="#pattools.timelines.FileMetadata.processed_file">processed_file</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.series_description" href="#pattools.timelines.FileMetadata.series_description">series_description</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.series_uid" href="#pattools.timelines.FileMetadata.series_uid">series_uid</a></code></li>
+<li><code><a title="pattools.timelines.FileMetadata.study_uid" href="#pattools.timelines.FileMetadata.study_uid">study_uid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.Filter" href="#pattools.timelines.Filter">Filter</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.timelines.Filter.filter" href="#pattools.timelines.Filter.filter">filter</a></code></li>
+<li><code><a title="pattools.timelines.Filter.min_cols" href="#pattools.timelines.Filter.min_cols">min_cols</a></code></li>
+<li><code><a title="pattools.timelines.Filter.min_rows" href="#pattools.timelines.Filter.min_rows">min_rows</a></code></li>
+<li><code><a title="pattools.timelines.Filter.name" href="#pattools.timelines.Filter.name">name</a></code></li>
+<li><code><a title="pattools.timelines.Filter.scorecard" href="#pattools.timelines.Filter.scorecard">scorecard</a></code></li>
+<li><code><a title="pattools.timelines.Filter.threshold" href="#pattools.timelines.Filter.threshold">threshold</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.LinearInterpolator" href="#pattools.timelines.LinearInterpolator">LinearInterpolator</a></code></h4>
+<ul class="">
+<li><code><a title="pattools.timelines.LinearInterpolator.interpolate" href="#pattools.timelines.LinearInterpolator.interpolate">interpolate</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.NearestNeighbourInterpolator" href="#pattools.timelines.NearestNeighbourInterpolator">NearestNeighbourInterpolator</a></code></h4>
+<ul class="">
+<li><code><a title="pattools.timelines.NearestNeighbourInterpolator.interpolate" href="#pattools.timelines.NearestNeighbourInterpolator.interpolate">interpolate</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.Renderer" href="#pattools.timelines.Renderer">Renderer</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pattools.timelines.Renderer.days_delta" href="#pattools.timelines.Renderer.days_delta">days_delta</a></code></li>
+<li><code><a title="pattools.timelines.Renderer.interpolator" href="#pattools.timelines.Renderer.interpolator">interpolator</a></code></li>
+<li><code><a title="pattools.timelines.Renderer.render" href="#pattools.timelines.Renderer.render">render</a></code></li>
+<li><code><a title="pattools.timelines.Renderer.render_all" href="#pattools.timelines.Renderer.render_all">render_all</a></code></li>
+<li><code><a title="pattools.timelines.Renderer.write_image" href="#pattools.timelines.Renderer.write_image">write_image</a></code></li>
+<li><code><a title="pattools.timelines.Renderer.write_images" href="#pattools.timelines.Renderer.write_images">write_images</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.ScorecardElement" href="#pattools.timelines.ScorecardElement">ScorecardElement</a></code></h4>
+<ul class="">
+<li><code><a title="pattools.timelines.ScorecardElement.description" href="#pattools.timelines.ScorecardElement.description">description</a></code></li>
+<li><code><a title="pattools.timelines.ScorecardElement.points" href="#pattools.timelines.ScorecardElement.points">points</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pattools.timelines.Timeline" href="#pattools.timelines.Timeline">Timeline</a></code></h4>
+<ul class="">
+<li><code><a title="pattools.timelines.Timeline.brain_mask" href="#pattools.timelines.Timeline.brain_mask">brain_mask</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.datamap" href="#pattools.timelines.Timeline.datamap">datamap</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.end_date" href="#pattools.timelines.Timeline.end_date">end_date</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.filters" href="#pattools.timelines.Timeline.filters">filters</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.is_processed" href="#pattools.timelines.Timeline.is_processed">is_processed</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.is_rendererd" href="#pattools.timelines.Timeline.is_rendererd">is_rendererd</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.load" href="#pattools.timelines.Timeline.load">load</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.path" href="#pattools.timelines.Timeline.path">path</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.patient_id" href="#pattools.timelines.Timeline.patient_id">patient_id</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.process" href="#pattools.timelines.Timeline.process">process</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.process_file" href="#pattools.timelines.Timeline.process_file">process_file</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.registration_reference" href="#pattools.timelines.Timeline.registration_reference">registration_reference</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.save" href="#pattools.timelines.Timeline.save">save</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.setup_registration_reference" href="#pattools.timelines.Timeline.setup_registration_reference">setup_registration_reference</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.start_date" href="#pattools.timelines.Timeline.start_date">start_date</a></code></li>
+<li><code><a title="pattools.timelines.Timeline.update_from_pacs" href="#pattools.timelines.Timeline.update_from_pacs">update_from_pacs</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.4</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

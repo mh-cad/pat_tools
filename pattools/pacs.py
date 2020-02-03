@@ -1,3 +1,5 @@
+'''The PACs module contains classes that enable simple, patient-based access to PACS data.'''
+
 import ast
 import os
 from dicom2nifti.convert_dicom import dicom_array_to_nifti
@@ -112,6 +114,7 @@ from pynetdicom.sop_class import (
 
 
 def cget_series(scp_settings, dataset):
+    '''Runs a series level CGET request'''
     ae = AE(scp_settings.local_aet)
     # Add the requested presentation contexts (QR SCU)
     ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
@@ -179,6 +182,7 @@ def cget_series(scp_settings, dataset):
         raise ConnectionError('Association rejected, aborted or never connected')
 
 def cget_report(scp_settings, dataset):
+    '''Runs a CGET request for a report'''
     ae = AE(scp_settings.local_aet)
     # Add the requested presentation contexts (QR SCU)
     ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
@@ -251,6 +255,7 @@ def cfind(scp_settings, dataset, query_model='P'):
         raise ConnectionError('Association rejected, aborted or never connected ' + scp_settings.ae_title)
 
 def find_studies_from_patient(patient):
+    '''Runs a CFIND for all studies for a given patient'''
     ds = Dataset()
     ds.PatientID = patient.id
     ds.PatientName = patient.name
@@ -277,6 +282,7 @@ def find_studies_from_patient(patient):
     return studies
 
 def find_series_from_study(study):
+    '''CFINDS all series for a given study'''
     ds = Dataset()
     ds.StudyInstanceUID = study.study_uid
     ds.AccessionNumber = ''
@@ -301,6 +307,7 @@ def find_series_from_study(study):
 def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '',
     accession_number = '', modalities_in_study = '', study_date = '',
     study_time = '', description = ''):
+    '''Run a study level CFIND requests using the supplied parameters'''
     ds = Dataset()
     ds.PatientID = patient_id
     ds.PatientName = patient_name
@@ -324,6 +331,7 @@ def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '
 
 ### ScpSettings class
 class ScpSettings:
+  '''A class representing SCP settings (i.e. how to connect to PACS)'''
   ae_title = None
   host = None
   port = None
@@ -379,6 +387,7 @@ class Patient:
 
     @staticmethod
     def from_id(id, scp_settings):
+        '''Returns a patient from a given patient id'''
         ds = Dataset()
         ds.PatientID = id
         ds.PatientName = ''
@@ -407,6 +416,7 @@ class Patient:
 
     @staticmethod
     def from_study(study):
+        '''Create a patient object from a study'''
         ds = Dataset()
         ds.PatientID = ''
         ds.PatientName = ''
@@ -444,9 +454,11 @@ class Study:
             'scp_settings        : ' + str(self.scp_settings))
 
     def find_series(self):
+        '''Find all series for this study'''
         return find_series_from_study(self)
 
     def get_report(self):
+        '''CGET the report for this study'''
         series = self.find_series()
         for seri in [s for s in series if s.modality == 'SR']:
             if seri.modality == 'SR':
@@ -510,6 +522,7 @@ class Series:
             'scp_settings : ' + str(self.scp_settings))
 
     def save_dicom(self, dir_path):
+        '''Save this series as a dicom (to folder)'''
         if not os.path.exists(dir_path): os.mkdir(dir_path)
         ds = Dataset()
         ds.SeriesInstanceUID = self.series_uid
@@ -521,6 +534,7 @@ class Series:
         return True
 
     def save_nifti(self, file_path, max_attempts=3):
+        '''Save this series as a nifti file'''
         if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != '':
             os.mkdir(os.path.dirname(file_path))
         ds = Dataset()
@@ -564,6 +578,7 @@ class Series:
         return series
 
 class Report(Series):
+    '''This class represents a study report'''
     patient_name = None
     patient_id = None
     patient_dob = None

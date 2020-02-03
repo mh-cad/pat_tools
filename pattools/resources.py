@@ -1,3 +1,5 @@
+'''A set of helper methods to access handy resources (e.g. Atlases or datasets)'''
+
 from zipfile import ZipFile
 import requests
 import io
