@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pattools",
-    version="0.0.1",
+    version="0.0.1.1",
     author="plwp",
     author_email="pat@plwp.net",
     description="Toolkit for neuro-imaging data manipulation and automation",

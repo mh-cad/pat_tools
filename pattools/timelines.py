@@ -146,6 +146,8 @@ class FileMetadata:
 class Timeline:
     '''The timeline contains filtered lists of scans over a single patient's history'''
     patient_id = None #ID of the Patient in PACS
+    patient_name = None
+    patient_dob = None
     path = None #Path to the root timeline folder
     start_date = None #First date covered by timeline
     end_date = None #Last date covered by timeline
@@ -177,6 +179,8 @@ class Timeline:
         if scp_settings == None: return
 
         patient = Patient(self.patient_id, scp_settings)
+        self.patient_name = patient.name
+        self.patient_dob = patient.dob
         # Do we have new dates?
         for study in patient.find_studies():
             study_path = os.path.join(self.path, study.study_date)
@@ -239,7 +243,9 @@ class Timeline:
         '''Load from disk'''
         with open(os.path.join(self.path, 'timeline.metadata'), 'r') as f:
             content = f.read()
+            path = self.path
             self.__dict__ = json.loads(content)
+            self.path = path # The saved path may be different but this is where we loaded it.
         self._load_datamap()
 
     def _save_datamap(self):
