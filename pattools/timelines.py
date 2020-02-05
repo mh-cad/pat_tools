@@ -11,7 +11,7 @@ import os
 import shutil
 from clint.textui import progress
 from tempfile import TemporaryDirectory
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import imageio
 
 class ScorecardElement:
@@ -372,6 +372,12 @@ class Timeline:
         files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
         for input, output in files_to_process:
             self.process_file(input, output)
+
+    def study_dates(self):
+        '''Returns all study dates, whether we have a scan or not'''
+        folders = next(os.walk(self.path))[1]
+        return [datetime.strptime(f, '%Y%m%d').date() for f in folders]
+
 
  #############################
 ######## INTERPOLATORS ########
