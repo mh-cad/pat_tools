@@ -451,6 +451,29 @@ class NearestNeighbourInterpolator(_AbstractInterpolator):
         if ratio >= 0.5: return data2
         return data1
 
+class NullInterpolator(_AbstractInterpolator):
+    '''The null iterpolator returns only the masked data (with no interpolation)'''
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        pass
+
+    def interpolated_data(self, image_paths, mask_path, delta_days=None):
+        for path in image_paths:
+            # Open the nifti file
+            img = nib.load(path)
+            # Get the data
+            data = img.get_fdata()
+
+            if (mask_path != None):
+                mask_img = nib.load(mask_path)
+                mask_data = mask_img.get_fdata()
+                data *= mask_data
+
+            date = _AbstractInterpolator._date_from_path(path)
+            yield (date, data)
+
  #########################
 ######## Renderers ########
  #########################
@@ -465,7 +488,7 @@ class Renderer:
         self.days_delta = days_delta
 
     def render(self, timeline, path):
-        '''Write images to path given based on a timeline'''
+        '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
         filters = [filter.name for filter in timeline.filters]
         for filter in filters:
             files = []
@@ -513,9 +536,9 @@ class Renderer:
     def _render_volume(date, volume, path):
         min_val = np.amin(volume)
         max_val = np.amax(volume)
-        Renderer.write_images(volume, os.path.join(path, 'sag', date.strftime('%Y%m%d')), 'sag', min_val, max_val)
-        Renderer.write_images(volume, os.path.join(path, 'cor', date.strftime('%Y%m%d')), 'cor', min_val, max_val)
-        Renderer.write_images(volume, os.path.join(path, 'ax', date.strftime('%Y%m%d')), 'ax', min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'sag'), 'sag', min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'cor'), 'cor', min_val, max_val)
+        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'ax'), 'ax', min_val, max_val)
 
     def render_all(self, files, mask_path, path):
         '''Render all volumes using supplied brain mask'''
