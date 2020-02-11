@@ -487,8 +487,8 @@ class Renderer:
         self.interpolator = interpolator
         self.days_delta = days_delta
 
-    def render(self, timeline, path):
-        '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
+    @staticmethod
+    def _get_files(timeline):
         filters = [filter.name for filter in timeline.filters]
         for filter in filters:
             files = []
@@ -498,7 +498,15 @@ class Renderer:
                     for f in timeline.datamap[studydate]
                     if f.filter_name == filter])
 
+    def render(self, timeline, path):
+        '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
+            files = Renderer._get_files(timeline)
             self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+
+    def render_new_studies(self, timeline, path):
+        '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
+        files = Renderer._get_files(timeline)
+        self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
 
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
@@ -525,6 +533,7 @@ class Renderer:
 
     @staticmethod
     def write_image(slice, location, min, max):
+        '''Write a single slice to an image at the given location'''
         # This is a bit of a hack to make sure the range is normal
         slice[0,0] = max
         slice[0,1] = min
@@ -533,15 +542,30 @@ class Renderer:
         imageio.imwrite(location, output)
 
     @staticmethod
-    def _render_volume(date, volume, path):
+    def _render_volume(date, volume, path, overwrite=True):
+        '''Render every slice in a volume along 3 axis.'''
         min_val = np.amin(volume)
         max_val = np.amax(volume)
-        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'sag'), 'sag', min_val, max_val)
-        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'cor'), 'cor', min_val, max_val)
-        Renderer.write_images(volume, os.path.join(path, date.strftime('%Y%m%d'), 'ax'), 'ax', min_val, max_val)
+        # Output paths
+        sag_path = os.path.join(path, date.strftime('%Y%m%d'), 'sag')
+        cor_path = os.path.join(path, date.strftime('%Y%m%d'), 'cor')
+        ax_path = os.path.join(path, date.strftime('%Y%m%d'), 'ax')
+        # Write images if the folder doesn't exist or overwrite is true
+        if overwrite or os.path.exists(sag_path) == False:
+            Renderer.write_images(volume, sag_path, 'sag', min_val, max_val)
+        if overwrite or os.path.exists(cor_path) == False:
+            Renderer.write_images(volume, cor_path, 'cor', min_val, max_val)
+        if overwrite or os.path.exists(ax_path) == False:
+            Renderer.write_images(volume, ax_path, 'ax', min_val, max_val)
 
     def render_all(self, files, mask_path, path):
         '''Render all volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path)
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
+            for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))
+
+    def render_new(self, files, mask_path, path):
+        '''Render new volumes using supplied brain mask'''
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=False)
             for date, volume in self.interpolator.interpolated_data(files, mask_path, self.days_delta))
