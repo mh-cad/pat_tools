@@ -433,6 +433,7 @@ class Patient:
 class Study:
     ''' Contains the details for a single study'''
     study_uid = None
+    patient_id = None
     accession_number = None
     modalities_in_study = None
     study_date = None
@@ -496,6 +497,9 @@ class Study:
                     study.modalities_in_study = [field.split(': ')[-1].strip("'").strip('"')]
             elif field.startswith('(0020, 000d)'):
                 study.study_uid = field.split()[-1].strip("'").strip('"')
+            elif field.startswith('(0010, 0020)'):
+                study.patient_id = field.split()[-1].strip("'").strip('"')
+
         return study
 
 class Series:
