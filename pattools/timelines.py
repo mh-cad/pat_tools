@@ -500,8 +500,8 @@ class Renderer:
 
     def render(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-            files = Renderer._get_files(timeline)
-            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+        files = Renderer._get_files(timeline)
+        self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
 
     def render_new_studies(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
