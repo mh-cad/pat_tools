@@ -494,7 +494,7 @@ class Renderer:
             files.extend([
                 os.path.join(timeline.path, studydate, f.processed_file)
                 for f in timeline.datamap[studydate]
-                if f.filter_name == filter])
+                if f.filter_name == filter.filter_name])
         return files
 
     def render(self, timeline, path):
