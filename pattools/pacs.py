@@ -304,30 +304,30 @@ def find_series_from_study(study):
 
     return series
 
-def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '',
-    accession_number = '', modalities_in_study = '', study_date = '',
-    study_time = '', description = ''):
-    '''Run a study level CFIND requests using the supplied parameters'''
-    ds = Dataset()
-    ds.PatientID = patient_id
-    ds.PatientName = patient_name
-    ds.StudyInstanceUID = study_uid
-    ds.AccessionNumber = accession_number
-    ds.QueryRetrieveLevel = 'STUDY'
-    ds.ModalitiesInStudy = str(modalities_in_study)
-    ds.StudyDescription = description
-    ds.SeriesInStudy=''
-    ds.StudyDate=study_date
-    ds.StudyTime=study_time
-
-    results = cfind(scp_settings, ds)
-    studies = []
-    for result in results:
-        study = Study.parse_result(result)
-        study.scp_settings = patient.scp_settings
-        if study != None: studies.append(study)
-
-    return studies
+#def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '',
+#    accession_number = '', modalities_in_study = '', study_date = '',
+#    study_time = '', description = ''):
+#    '''Run a study level CFIND requests using the supplied parameters'''
+#    ds = Dataset()
+#    ds.PatientID = patient_id
+#    ds.PatientName = patient_name
+#    ds.StudyInstanceUID = study_uid
+#    ds.AccessionNumber = accession_number
+#    ds.QueryRetrieveLevel = 'STUDY'
+#    ds.ModalitiesInStudy = str(modalities_in_study)
+#    ds.StudyDescription = description
+#    ds.SeriesInStudy=''
+#    ds.StudyDate=study_date
+#    ds.StudyTime=study_time
+#
+#    results = cfind(scp_settings, ds)
+#    studies = []
+#    for result in results:
+#        study = Study.parse_result(result)
+#        study.scp_settings = patient.scp_settings
+#        if study != None: studies.append(study)
+#
+#    return studies
 
 ### ScpSettings class
 class ScpSettings:
