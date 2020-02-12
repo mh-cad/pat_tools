@@ -488,25 +488,28 @@ class Renderer:
         self.days_delta = days_delta
 
     @staticmethod
-    def _get_files(timeline):
-        filters = [filter.name for filter in timeline.filters]
-        for filter in filters:
-            files = []
-            for studydate in timeline.datamap:
-                files.extend([
-                    os.path.join(timeline.path, studydate, f.processed_file)
-                    for f in timeline.datamap[studydate]
-                    if f.filter_name == filter])
+    def _get_files(timeline, filter):
+        files = []
+        for studydate in timeline.datamap:
+            files.extend([
+                os.path.join(timeline.path, studydate, f.processed_file)
+                for f in timeline.datamap[studydate]
+                if f.filter_name == filter])
+        return files
 
     def render(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        files = Renderer._get_files(timeline)
-        self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+        filters = [filter.name for filter in timeline.filters]
+        for filter in filters:
+            files = Renderer._get_files(timeline, filter)
+            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
 
     def render_new_studies(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        files = Renderer._get_files(timeline)
-        self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+        filters = [filter.name for filter in timeline.filters]
+        for filter in filters:
+            files = Renderer._get_files(timeline, filter)
+            self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
 
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
