@@ -213,6 +213,7 @@ class Timeline:
                                 os.remove(os.path.join(study_path, data.processed_file))
                         else:
                             new_series = False
+                        self.datamap[study.study_date].append(data)
                     # If we have a new (or replaced) series, update everything and get the data
                     if new_series:
                         data = FileMetadata(
@@ -292,9 +293,11 @@ class Timeline:
             for f in files:
                 if (f.endswith('.nii') or f.endswith('.nii.gz')) and f+'.metadata' in files:
                     candidates.append(os.path.join(dir, f))
-        candidates.sort(key=lambda c : os.stat(c).st_size)
+        # candidates are sorted by the minimum dimension size
+        candidates.sort(key=lambda c : min(nib.load(c).shape))
         if len(candidates) == 0: return
-        candidate = candidates[int(len(candidates)/3*2)]
+        # return the candidate with the largest minimum dimension size
+        candidate = candidates[-1]
         print('candidate:', candidate)
 
         with TemporaryDirectory() as tmp_dir:
@@ -313,17 +316,23 @@ class Timeline:
             # Bias correction and registration
             print('        N4 Bias correction for reference image...')
             n4_path = os.path.join(self.path, 'registration_reference.nii.gz')
-            out_path = os.path.join(tmp_dir, 'waped.nii.gz')
+            out_path = os.path.join(tmp_dir, 'warped.nii.gz')
             ants.n4_bias_correct(candidate, n4_path).wait()
 
-            print('        Registering reference image to brain mask...')
-            ants.affine_registration(t2_path, n4_path, out_path).wait()
+            print('        Registering brain mask to reference image...')
             # Register mask to reference scan
+            ants.syn_registration(t2_path, n4_path, out_path).wait()
+            # These will be the output of the registration
             affine_mat = out_path + '_0GenericAffine.mat'
-
-            shutil.copyfile(affine_mat, os.path.join(self.path, 'atlas2ref.mat'))
+            inverse_warp = out_path + '_1InverseWarp.nii.gz'
+            warp = out_path + '_1Warp.nii.gz'
+            # Keep them handy
+            shutil.copyfile(affine_mat, os.path.join(self.path, 'affine_from_MNI.mat'))
+            shutil.copyfile(inverse_warp, os.path.join(self.path, 'warp_to_MNI.nii.gz'))
+            shutil.copyfile(warp, os.path.join(self.path, 'warp_from_MNI.nii.gz'))
+            # Apply affine transform then warp to put mask in registered space
             out_path = os.path.join(self.path, 'brain_mask.nii.gz')
-            ants.apply_linear_transform(mask_path, n4_path, affine_mat, out_path).wait()
+            ants.apply_transform(mask_path, n4_path, affine_mat, out_path, warp=warp).wait()
             # Save metadata
             self.registration_reference = 'registration_reference.nii.gz'
             self.brain_mask = 'brain_mask.nii.gz'
@@ -362,10 +371,11 @@ class Timeline:
         files_to_process = []
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
-            for filter in self.datamap[study]:
-                if not os.path.exists(os.path.join(study_path,filter.processed_file)):
-                    input = os.path.join(self.path, study, filter.file)
-                    output = os.path.join(self.path, study, filter.processed_file)
+            for filemeta in self.datamap[study]:
+                print(os.path.exists(os.path.join(study_path, filemeta.processed_file)))
+                if not os.path.exists(os.path.join(study_path, filemeta.processed_file)):
+                    input = os.path.join(self.path, study, filemeta.file)
+                    output = os.path.join(self.path, study, filemeta.processed_file)
                     files_to_process.append((input, output))
         # Add a progress bar
         print('Processing', len(files_to_process), 'files...')
@@ -393,7 +403,7 @@ class _AbstractInterpolator:
         datestring = os.path.basename(os.path.dirname(path))
         return date(int(datestring[0:4]), int(datestring[4:6]), int(datestring[6:]))
 
-    def interpolated_data(self, image_paths, mask_path, delta_days=28):
+    def interpolated_data(self, image_paths, mask_path, delta_days):
         ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
         # We only want to yield data2 on the final pair, so we'll need a reference
         data2 = None
@@ -492,24 +502,22 @@ class Renderer:
         files = []
         for studydate in timeline.datamap:
             files.extend([
-                os.path.join(timeline.path, studydate, f.processed_file)
-                for f in timeline.datamap[studydate]
-                if f.filter_name == filter.filter_name])
+                os.path.join(timeline.path, studydate, fm.processed_file)
+                for fm in timeline.datamap[studydate]
+                if fm.filter_name == filter.name])
         return files
 
     def render(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        filters = [filter.name for filter in timeline.filters]
-        for filter in filters:
+        for filter in timeline.filters:
             files = Renderer._get_files(timeline, filter)
-            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter.name))
 
     def render_new_studies(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        filters = [filter.name for filter in timeline.filters]
-        for filter in filters:
+        for filter in timeline.filters:
             files = Renderer._get_files(timeline, filter)
-            self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter))
+            self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter.name))
 
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
