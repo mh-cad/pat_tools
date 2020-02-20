@@ -171,7 +171,7 @@ class Timeline:
             self.load()
 
         # If that doesn't work, try to create from PACS
-        if not os.path.exists(path): os.makedirs(path)
+        if not os.path.exists(path): os.makedirs(path, mode=0o777)
         self.save()
 
     def update_from_pacs(self, scp_settings):
@@ -205,6 +205,7 @@ class Timeline:
                                 data.__dict__ = json.loads(f.read())
                             except:
                                 raise Exception('Failed to read ' + metadatafile)
+
                         # If the series has changed, we'll delete the old one.
                         if data.series_uid != series.series_uid:
                             if os.path.exists(os.path.join(study_path, data.file)):
@@ -228,6 +229,11 @@ class Timeline:
                         with open(metadatafile, 'w') as f:
                             f.write(json.dumps(vars(data)))
                             f.flush()
+                        series.save_nifti(os.path.join(study_path,data.file))
+
+                    # Try to re-download original file if we don't have it
+                    if not os.path.exists(os.path.join(study_path, data.file)):
+                        print("Can't find the series, let's try again...")
                         series.save_nifti(os.path.join(study_path,data.file))
 
         self.is_processed = False
@@ -255,7 +261,7 @@ class Timeline:
             for filemeta in self.datamap[studydate]:
                 # Create study directory if it's not there
                 studypath = os.path.join(self.path, studydate)
-                if not os.path.exists(studypath): os.makedirs(studypath)
+                if not os.path.exists(studypath): os.makedirs(studypath, mode=0o777)
                 # Save metadata
                 with open(os.path.join(studypath, filemeta.file + '.metadata'), 'w') as f:
                     f.write(json.dumps(vars(filemeta)))
@@ -302,8 +308,8 @@ class Timeline:
 
         with TemporaryDirectory() as tmp_dir:
             #Open atlas
-            atlas_path = '/data/atlas/mni'
-            if not os.path.exists(atlas_path): os.makedirs(atlas_path)
+            atlas_path = os.path.join(self.path, '../atlas/mni')
+            if not os.path.exists(atlas_path): os.makedirs(atlas_path, mode=0o777)
             atlas = Atlas.MNI.load(atlas_path)
 
             # save atlas to tmp_dir and mask to timeline
@@ -321,18 +327,18 @@ class Timeline:
 
             print('        Registering brain mask to reference image...')
             # Register mask to reference scan
-            ants.syn_registration(t2_path, n4_path, out_path).wait()
+            ants.affine_registration(t2_path, n4_path, out_path).wait()
             # These will be the output of the registration
             affine_mat = out_path + '_0GenericAffine.mat'
-            inverse_warp = out_path + '_1InverseWarp.nii.gz'
-            warp = out_path + '_1Warp.nii.gz'
+            #inverse_warp = out_path + '_1InverseWarp.nii.gz'
+            #warp = out_path + '_1Warp.nii.gz'
             # Keep them handy
             shutil.copyfile(affine_mat, os.path.join(self.path, 'affine_from_MNI.mat'))
-            shutil.copyfile(inverse_warp, os.path.join(self.path, 'warp_to_MNI.nii.gz'))
-            shutil.copyfile(warp, os.path.join(self.path, 'warp_from_MNI.nii.gz'))
+            #shutil.copyfile(inverse_warp, os.path.join(self.path, 'warp_to_MNI.nii.gz'))
+            #shutil.copyfile(warp, os.path.join(self.path, 'warp_from_MNI.nii.gz'))
             # Apply affine transform then warp to put mask in registered space
             out_path = os.path.join(self.path, 'brain_mask.nii.gz')
-            ants.apply_transform(mask_path, n4_path, affine_mat, out_path, warp=warp).wait()
+            ants.apply_transform(mask_path, n4_path, affine_mat, out_path).wait()
             # Save metadata
             self.registration_reference = 'registration_reference.nii.gz'
             self.brain_mask = 'brain_mask.nii.gz'
@@ -408,6 +414,16 @@ class _AbstractInterpolator:
         # We only want to yield data2 on the final pair, so we'll need a reference
         data2 = None
         date2 = None
+        # Handle the empty case
+        if len(image_paths) == 0: return
+        # Handle the case of 1 image
+        if len(image_paths) == 1:
+            if mask_path != None and os.path.exists(mask_path):
+                yield (_AbstractInterpolator._date_from_path(image_paths[0]), nib.load(image_paths[0]).get_fdata() * nib.load(mask_path).get_fdata())
+            else:
+                raise Exception('Path ' + mask_path + ' does not exist')
+            return
+        # Handle 2 or more images
         for p1, p2 in zip(image_paths[:-1], image_paths[1:]):
             # Do some error checking...
             if not os.path.exists(p1):
@@ -522,7 +538,7 @@ class Renderer:
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
         if not os.path.exists(folder):
-            os.makedirs(folder)
+            os.makedirs(folder, mode=0o777)
         data_cp = np.copy(data)
         count = 0
         if slice_type == 'sag':

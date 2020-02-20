@@ -81,5 +81,5 @@ def apply_transform(floating, fixed, affine, output, warp=None, invert_affine=Fa
     cmd.append('-o')
     cmd.append(output)
 
-    p = subprocess.Popen()
+    p = subprocess.Popen(cmd)
     return p
