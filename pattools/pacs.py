@@ -537,8 +537,9 @@ class Series:
              dicom.save_as(os.path.join(dir_path, dicom.SOPInstanceUID +'.dcm'), write_like_original=False)
         return True
 
-    def save_nifti(self, file_path, max_attempts=3):
+    def save_nifti(self, file_path, max_attempts=5):
         '''Save this series as a nifti file'''
+        print('saving file:', file_path)
         if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path) != '':
             os.mkdir(os.path.dirname(file_path))
         ds = Dataset()
@@ -548,13 +549,14 @@ class Series:
         dicoms = None
         attempts = 0
         while dicoms == None and attempts < max_attempts:
+            print('trying c_get')
             attempts += 1
             try:
                 dicoms = cget_series(self.scp_settings, ds)
-            except:
+            except Exception as e:
+                print(e)
                 if attempts >= max_attempts:
                     raise
-
         try:
             dicom_array_to_nifti(dicoms, file_path, reorient_nifti=True)
             return True

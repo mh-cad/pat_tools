@@ -174,14 +174,42 @@ class Timeline:
         if not os.path.exists(path): os.makedirs(path, mode=0o777)
         self.save()
 
+    def clean(self):
+        '''Removes any folders where the number of metadata files and image files don't match'''
+        self.datamap = {}
+
+        if not os.path.exists(self.path): return
+
+        to_clean = []
+        for root, folders, files in os.walk(self.path):
+            if (len(folders) == 0
+                and len([f for f in files if f.endswith('.nii.gz') or f.endswith('.nii')])
+                    < len([f for f in files if f.endswith('.metadata') and f != 'timeline.metadata'])):
+                to_clean.append(os.path.join(self.path, root))
+
+        print('cleaning:', to_clean)
+        for root in to_clean:
+            shutil.rmtree(root)
+
     def update_from_pacs(self, scp_settings):
         '''Populate the Timeline from PACS'''
-        if scp_settings == None: return
+        print('Updating from PACS...')
+
+        if scp_settings == None:
+            print('No SCP Settings found.')
+            return
 
         patient = Patient(self.patient_id, scp_settings)
         self.patient_name = patient.name
         self.patient_dob = patient.dob
         # Do we have new dates?
+
+        # Sometimes there will be studies which showed up and created metadata,
+        # but don't have an image. Then they dissapear and ruin everything.
+        # TODO: Find out why.
+        # For now we'll just clean directories where the metadata count != the image count.
+        self.clean()
+
         for study in patient.find_studies():
             study_path = os.path.join(self.path, study.study_date)
             try:
@@ -191,15 +219,18 @@ class Timeline:
 
             # Create a new in-memory data map
             self.datamap[study.study_date] = []
+            print('study date:', study.study_date)
             # Get filtered series
             for filter in self.filters:
                 series = filter.filter(study)
                 if series != None:
+                    print('series:', series.description)
                     data = FileMetadata(file=filter.name + ".nii.gz")
                     new_series = True
                     metadatafile = os.path.join(study_path, data.file + '.metadata')
                     # Update existing metadata
                     if os.path.exists(metadatafile):
+                        print('metadata found')
                         with open(metadatafile, 'r') as f:
                             try:
                                 data.__dict__ = json.loads(f.read())
@@ -213,7 +244,11 @@ class Timeline:
                             if os.path.exists(os.path.join(study_path, data.processed_file)):
                                 os.remove(os.path.join(study_path, data.processed_file))
                         else:
-                            new_series = False
+                            # There has been no change and the file exists.
+                            if os.path.exists(os.path.join(study_path, data.file)):
+                                print('nifti found and has not changed')
+                                new_series = False
+
                         self.datamap[study.study_date].append(data)
                     # If we have a new (or replaced) series, update everything and get the data
                     if new_series:
@@ -229,7 +264,12 @@ class Timeline:
                         with open(metadatafile, 'w') as f:
                             f.write(json.dumps(vars(data)))
                             f.flush()
+                        print('downloading:',os.path.join(study_path,data.file))
                         series.save_nifti(os.path.join(study_path,data.file))
+                        if os.path.exists(os.path.join(study_path, data.file)):
+                            print('success')
+                        else:
+                            print('failed')
 
                     # Try to re-download original file if we don't have it
                     if not os.path.exists(os.path.join(study_path, data.file)):
@@ -241,7 +281,7 @@ class Timeline:
 
     def save(self):
         '''Save to disk'''
-        content = json.dumps(vars(self))
+        content = json.dumps(vars(self), default=lambda o: o.__dict__, sort_keys=True, indent=4)
         with open(os.path.join(self.path, 'timeline.metadata'), 'w') as f:
             f.write(content)
         self._save_datamap()
@@ -300,10 +340,11 @@ class Timeline:
                 if (f.endswith('.nii') or f.endswith('.nii.gz')) and f+'.metadata' in files:
                     candidates.append(os.path.join(dir, f))
         # candidates are sorted by the minimum dimension size
-        candidates.sort(key=lambda c : min(nib.load(c).shape))
+        candidates.sort(key=lambda c : min(nib.load(c).shape)) # Sort by minimum slices
+        #candidates.sort(key=lambda c : os.stat(c).st_size) # Sort by file size
         if len(candidates) == 0: return
         # return the candidate with the largest minimum dimension size
-        candidate = candidates[-1]
+        candidate = candidates[int(len(candidates) * 3 / 4)]
         print('candidate:', candidate)
 
         with TemporaryDirectory() as tmp_dir:
@@ -375,6 +416,7 @@ class Timeline:
             self.setup_registration_reference()
 
         files_to_process = []
+        self._load_datamap()
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
             for filemeta in self.datamap[study]:
@@ -527,13 +569,20 @@ class Renderer:
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
         for filter in timeline.filters:
             files = Renderer._get_files(timeline, filter)
-            self.render_all(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter.name))
+            mask_path = None
+            if timeline.path != None and timeline.brain_mask != None:
+                 mask_path = os.path.join(timeline.path, timeline.brain_mask)
+            self.render_all(files, mask_path, os.path.join(path, filter.name))
 
     def render_new_studies(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
         for filter in timeline.filters:
             files = Renderer._get_files(timeline, filter)
-            self.render_new(files, os.path.join(timeline.path, timeline.brain_mask), os.path.join(path, filter.name))
+            mask_path = None
+            if timeline.path != None and timeline.brain_mask != None:
+                 mask_path = os.path.join(timeline.path, timeline.brain_mask)
+
+            self.render_new(files, mask_path, os.path.join(path, filter.name))
 
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
