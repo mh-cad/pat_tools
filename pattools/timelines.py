@@ -210,75 +210,77 @@ class Timeline:
         # TODO: Find out why.
         # For now we'll just clean directories where the metadata count != the image count.
         self.clean()
+        try:
+            for study in patient.find_studies():
+                study_path = os.path.join(self.path, study.study_date)
+                try:
+                    os.mkdir(study_path)
+                except:
+                    pass
 
-        for study in patient.find_studies():
-            study_path = os.path.join(self.path, study.study_date)
-            try:
-                os.mkdir(study_path)
-            except:
-                pass
+                # Create a new in-memory data map
+                self.datamap[study.study_date] = []
+                print('study date:', study.study_date)
+                # Get filtered series
+                for filter in self.filters:
+                    series = filter.filter(study)
+                    if series != None:
+                        print('series:', series.description)
+                        data = FileMetadata(file=filter.name + ".nii.gz")
+                        new_series = True
+                        metadatafile = os.path.join(study_path, data.file + '.metadata')
+                        # Update existing metadata
+                        if os.path.exists(metadatafile):
+                            print('metadata found')
+                            with open(metadatafile, 'r') as f:
+                                try:
+                                    data.__dict__ = json.loads(f.read())
+                                except:
+                                    raise Exception('Failed to read ' + metadatafile)
 
-            # Create a new in-memory data map
-            self.datamap[study.study_date] = []
-            print('study date:', study.study_date)
-            # Get filtered series
-            for filter in self.filters:
-                series = filter.filter(study)
-                if series != None:
-                    print('series:', series.description)
-                    data = FileMetadata(file=filter.name + ".nii.gz")
-                    new_series = True
-                    metadatafile = os.path.join(study_path, data.file + '.metadata')
-                    # Update existing metadata
-                    if os.path.exists(metadatafile):
-                        print('metadata found')
-                        with open(metadatafile, 'r') as f:
-                            try:
-                                data.__dict__ = json.loads(f.read())
-                            except:
-                                raise Exception('Failed to read ' + metadatafile)
+                            # If the series has changed, we'll delete the old one.
+                            if data.series_uid != series.series_uid:
+                                if os.path.exists(os.path.join(study_path, data.file)):
+                                    os.remove(os.path.join(study_path, data.file))
+                                if os.path.exists(os.path.join(study_path, data.processed_file)):
+                                    os.remove(os.path.join(study_path, data.processed_file))
+                            else:
+                                # There has been no change and the file exists.
+                                if os.path.exists(os.path.join(study_path, data.file)):
+                                    print('nifti found and has not changed')
+                                    new_series = False
 
-                        # If the series has changed, we'll delete the old one.
-                        if data.series_uid != series.series_uid:
+                            self.datamap[study.study_date].append(data)
+                        # If we have a new (or replaced) series, update everything and get the data
+                        if new_series:
+                            data = FileMetadata(
+                                file=filter.name + ".nii.gz",
+                                processed_file=filter.name + ".processed.nii.gz",
+                                filter_name=filter.name,
+                                study_uid=series.study_uid,
+                                series_uid=series.series_uid,
+                                series_description=series.description)
+                            self.datamap[study.study_date].append(data)
+                            # Write metadata
+                            with open(metadatafile, 'w') as f:
+                                f.write(json.dumps(vars(data)))
+                                f.flush()
+                            print('downloading:',os.path.join(study_path,data.file))
+                            series.save_nifti(os.path.join(study_path,data.file))
                             if os.path.exists(os.path.join(study_path, data.file)):
-                                os.remove(os.path.join(study_path, data.file))
-                            if os.path.exists(os.path.join(study_path, data.processed_file)):
-                                os.remove(os.path.join(study_path, data.processed_file))
-                        else:
-                            # There has been no change and the file exists.
-                            if os.path.exists(os.path.join(study_path, data.file)):
-                                print('nifti found and has not changed')
-                                new_series = False
+                                print('success')
+                            else:
+                                print('failed')
 
-                        self.datamap[study.study_date].append(data)
-                    # If we have a new (or replaced) series, update everything and get the data
-                    if new_series:
-                        data = FileMetadata(
-                            file=filter.name + ".nii.gz",
-                            processed_file=filter.name + ".processed.nii.gz",
-                            filter_name=filter.name,
-                            study_uid=series.study_uid,
-                            series_uid=series.series_uid,
-                            series_description=series.description)
-                        self.datamap[study.study_date].append(data)
-                        # Write metadata
-                        with open(metadatafile, 'w') as f:
-                            f.write(json.dumps(vars(data)))
-                            f.flush()
-                        print('downloading:',os.path.join(study_path,data.file))
-                        series.save_nifti(os.path.join(study_path,data.file))
-                        if os.path.exists(os.path.join(study_path, data.file)):
-                            print('success')
-                        else:
-                            print('failed')
+                        # Try to re-download original file if we don't have it
+                        if not os.path.exists(os.path.join(study_path, data.file)):
+                            print("Can't find the series, let's try again...")
+                            series.save_nifti(os.path.join(study_path,data.file))
 
-                    # Try to re-download original file if we don't have it
-                    if not os.path.exists(os.path.join(study_path, data.file)):
-                        print("Can't find the series, let's try again...")
-                        series.save_nifti(os.path.join(study_path,data.file))
-
-        self.is_processed = False
-        self.save()
+            self.is_processed = False
+            self.save()
+        except Exception as e:
+            print('Error occurred while updating from PACS', e)
 
     def save(self):
         '''Save to disk'''
