@@ -102,7 +102,6 @@ from pynetdicom.sop_class import (
     XRayRadiationDoseSRStorage,
     RadiopharmaceuticalRadiationDoseSRStorage,
     ColonCADSRStorage,
-    ImplantationPlanSRDocumentStorage,
     AcquisitionContextSRStorage,
     SimplifiedAdultEchoSRStorage,
     PositronEmissionTomographyImageStorage,
