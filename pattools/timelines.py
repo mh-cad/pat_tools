@@ -467,14 +467,15 @@ class _AbstractInterpolator:
     def interpolated_dates(dates, delta_days):
         ''' Returns a set of interpolated dates from a given list of dates and delta in days.'''
         result_dates = []
-        for date1, date2 in zip(dates[:-1], dates[1]):
+        for date1, date2 in zip(dates[:-1], dates[1:]):
             result_dates.append(date1)
             window = date2 - date1
             steps = int(window.days / delta_days)
             for i in range(0, steps):
                 result_dates.append(date1+timedelta(days=int(i*delta_days)))
         # Add the last date
-        result_dates.append(dates[:-1])
+        result_dates.append(dates[-1])
+        print('result_dates:', result_dates)
         return result_dates
 
 
@@ -486,13 +487,13 @@ class _AbstractInterpolator:
             return (date, data)
         else:
             # Get the closest two study dates
-            np_study_dates = np.asarray(study_dates)
+            np_study_dates = np.unique(np.asarray(study_dates))
             closest_dates = np.argsort(np.abs(np_study_dates - date))[0:2]
             idx_before = min(closest_dates)
             idx_after = max(closest_dates)
             # Load the data from those dates
             before_data = nib.load(study_paths[idx_before]).get_fdata() * mask_data
-            after_data = nib.load(study_paths[idx_before]).get_fdata() * mask_data
+            after_data = nib.load(study_paths[idx_after]).get_fdata() * mask_data
             # Work out the ratio for interpolation
             before_date = study_dates[idx_before]
             after_date = study_dates[idx_after]
@@ -520,8 +521,8 @@ class _AbstractInterpolator:
 
     def interpolated_data_from_delta(self, image_paths, mask_path, delta_days):
         ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
-        all_dates = _AbstractInterpolator.interpolated_dates([_AbstractInterpolator._date_from_path(p) for p in image_paths])
-        self.interpolated_data_from_dates(image_paths, mask_path, all_dates)
+        all_dates = _AbstractInterpolator.interpolated_dates([_AbstractInterpolator._date_from_path(p) for p in image_paths], delta_days)
+        return self.interpolated_data_from_dates(image_paths, mask_path, all_dates)
         # We only want to yield data2 on the final pair, so we'll need a reference
         #data2 = None
         #date2 = None
@@ -707,14 +708,12 @@ class Renderer:
 
     def render_all(self, files, mask_path, path, dates):
         #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
-        print('dates', dates)
         '''Render all volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
             delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
             for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
 
     def render_new(self, files, mask_path, path, dates):
-        print('dates', dates)
         '''Render new volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
             delayed(Renderer._render_volume)(date, volume, path, overwrite=False)
