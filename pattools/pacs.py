@@ -9,6 +9,8 @@ from pynetdicom import (
     AE, evt, build_role,
     PYNETDICOM_IMPLEMENTATION_UID,
     PYNETDICOM_IMPLEMENTATION_VERSION)
+# pylint: disable=no-name-in-module
+# (these are generated at runtime for this module)
 from pynetdicom.sop_class import (
     PatientRootQueryRetrieveInformationModelFind,
     StudyRootQueryRetrieveInformationModelFind,
@@ -158,6 +160,7 @@ def cget_series(scp_settings, dataset):
         dicoms.append(ds)
 
         return 0x0000
+
     handlers = [(evt.EVT_C_STORE, handle_store_series)]
 
     # Associate with peer AE
@@ -165,16 +168,14 @@ def cget_series(scp_settings, dataset):
         scp_settings.host, scp_settings.port,
         ae_title=scp_settings.ae_title, ext_neg=roles, evt_handlers=handlers)
 
+    # We're (apparently) using the handle_store_series 
     if assoc.is_established:
         responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
-        for (status, identifier) in responses:
+        for (status, _) in responses:
             if status:
-                # If the status is 'Pending' then identifier is the C-FIND response
-                if status.Status in (0xFF00, 0xFF01):
-                    result.append(str(identifier))
+                pass
             else:
                 raise TimeoutError('Connection timed out, was aborted or received invalid response')
-
         assoc.release()
         return dicoms
     else:
@@ -209,11 +210,9 @@ def cget_report(scp_settings, dataset):
 
     if assoc.is_established:
         responses = assoc.send_c_get(dataset, StudyRootQueryRetrieveInformationModelGet)
-        for (status, identifier) in responses:
+        for (status, _) in responses:
             if status:
-                # If the status is 'Pending' then identifier is the C-FIND response
-                if status.Status in (0xFF00, 0xFF01):
-                    result.append(str(identifier))
+                pass
             else:
                 raise TimeoutError('Connection timed out, was aborted or received invalid response')
 
@@ -414,23 +413,7 @@ class Patient:
             elif field.startswith('(0010, 0030)'):
                 patient.dob = field.split()[-1].strip("'").strip('"')
         return patient
-
-
-    @staticmethod
-    def from_study(study):
-        '''Create a patient object from a study'''
-        ds = Dataset()
-        ds.PatientID = ''
-        ds.PatientName = ''
-        ds.PatientBirthDate = ''
-        ds.PatientSex = ''
-        ds.StudyInstanceUID = study.study_uid
-        ds.AccessionNumber = study.accession_number
-        ds.QueryRetrieveLevel = 'PATIENT'
-        results = cfind(study.scp_settings, ds)
-        if len(results) > 1:
-            parse_result(result, study.scp_settings)
-
+        
 ### Study class
 class Study:
     ''' Contains the details for a single study'''

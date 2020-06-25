@@ -336,7 +336,7 @@ class Timeline:
             and os.path.exists(os.path.join(self.path,self.brain_mask))):
             return
         # For now we're just going to go with the biggest image as a proxy for high res
-        largest_file = (None, -1)
+        #largest_file = (None, -1)
         candidates = []
         for dir, _, files in os.walk(self.path):
             for f in files:
@@ -394,7 +394,6 @@ class Timeline:
         # These imports can complain on import, so we'll only get them now.
         from pattools import ants
         with TemporaryDirectory() as tmp_dir:
-            input = nib.load(input_path)
             n4_path = os.path.join(tmp_dir, 'n4.nii')
             ants.n4_bias_correct(input_path, n4_path).wait()
 
@@ -425,7 +424,8 @@ class Timeline:
         files_to_process = []
         self._load_datamap()
         histogram_references = {}
-        for fm in self.datamap[list(self.datamap)[-1]]:
+        # Take the newest file metadata for the given filter (e.g. latest study for the filter)
+        for fm in self.datamap[[x for x in list(self.datamap) if len(self.datamap[x]) > 1][-1]]:
             histogram_references[fm.filter_name] = fm.file
 
         for study in self.datamap:
@@ -444,9 +444,14 @@ class Timeline:
             self.process_file(input, output, histogram_reference=histogram_reference)
 
     def study_dates(self):
-        '''Returns all study dates, whether we have a scan or not'''
+        '''Returns all study dates with a valid scan'''
         folders = next(os.walk(self.path))[1]
-        return [datetime.strptime(f, '%Y%m%d').date() for f in folders]
+        dates = []
+        for folder in folders:
+            # Nasty one-liner that will return true if the folder contains .nii or .nii.gz files.
+            if len([f for f in next(os.walk(os.path.join(self.path, folder)))[2] if f[-7:] == '.nii.gz' or f[-4:] == 'nii']) > 0:
+                dates.append(datetime.strptime(folder, '%Y%m%d').date())
+        return dates
 
 
  #############################
@@ -706,6 +711,20 @@ class Renderer:
         if overwrite or os.path.exists(ax_path) == False:
             Renderer.write_images(volume, ax_path, 'ax', min_val, max_val)
 
+    def render_all(self, files, mask_path, path, dates):
+        #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
+        '''Render all volumes using supplied brain mask'''
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
+            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
+
+    def render_new(self, files, mask_path, path, dates):
+        '''Render new volumes using supplied brain mask'''
+        Parallel(n_jobs=multiprocessing.cpu_count())(
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=False)
+            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
+
+class VisTarsierRenderer(Renderer):
     def render_all(self, files, mask_path, path, dates):
         #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
         '''Render all volumes using supplied brain mask'''
