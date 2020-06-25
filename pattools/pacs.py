@@ -231,6 +231,9 @@ def cfind(scp_settings, dataset, query_model='P'):
     ae.add_requested_context('1.2.840.10008.5.1.4.1.1.88.11')
     assoc = ae.associate(
         scp_settings.host, scp_settings.port, ae_title=scp_settings.ae_title)
+    # I'm sure send_c_find used to accept the single letter versions but it doesn't now.
+    if query_model == 'S': query_model = StudyRootQueryRetrieveInformationModelFind
+    elif query_model == 'P': query_model = PatientRootQueryRetrieveInformationModelFind
 
     #Check for successful association
     if assoc.is_established:
