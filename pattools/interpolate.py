@@ -25,14 +25,12 @@ class _AbstractInterpolator:
         ''' Returns a set of interpolated dates from a given list of dates and delta in days.'''
         result_dates = []
         for date1, date2 in zip(dates[:-1], dates[1:]):
-            result_dates.append(date1)
             window = date2 - date1
             steps = int(window.days / delta_days)
             for i in range(0, steps):
                 result_dates.append(date1+timedelta(days=int(i*delta_days)))
         # Add the last date
         result_dates.append(dates[-1])
-        print('result_dates:', result_dates)
         return result_dates
 
 
@@ -58,7 +56,6 @@ class _AbstractInterpolator:
             delta = date - before_date
             ratio = 0.
             if after_delta != 0:
-                print('after_delta', after_delta)
                 ratio = delta / after_delta
             # yield the interpolated result
             return (date, self.interpolate(before_data, after_data, ratio))
@@ -69,8 +66,8 @@ class _AbstractInterpolator:
         if mask_path != None and os.path.exists(mask_path):
             mask_data = nib.load(mask_path).get_fdata()
         else:
-            print('mask path ' + str(mask_path) + ' does not exist')
-            raise Exception('mask path ' + str(mask_path) + ' does not exist')
+            print('mask path ' + str(mask_path) + ' does not exist, using no mask')
+            mask_data = 1
 
         for date in dates:
             d, d2 = self._data_for_date(date, study_dates, image_paths, mask_data)
