@@ -352,11 +352,11 @@ class Timeline:
             if apply_mask:
                 outdata *= mask.get_fdata()
             # normalise whitematter intensity
-            if self.whitematter_mask != None:
+            if self.whitematter_mask != None and self.brain_mask != None and histogram_reference != None:
                 whitematter_path = os.path.join(self.path, self.whitematter_mask)
                 outdata = normalize_by_whitematter(
-                    outdata,
-                    nib.load(ref_path).get_fdata() * mask.get_fdata(),
+                    outdata * mask.get_fdata(),
+                    histogram_reference * mask.get_fdata(),
                     nib.load(whitematter_path).get_fdata())
 
             output = nib.Nifti1Image(outdata, output.affine, output.header)
