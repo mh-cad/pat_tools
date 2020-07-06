@@ -354,6 +354,9 @@ class Timeline:
             # normalise whitematter intensity
             if self.whitematter_mask != None and self.brain_mask != None and histogram_reference != None:
                 whitematter_path = os.path.join(self.path, self.whitematter_mask)
+                print('type(mask.get_fdata())', type(mask.get_fdata()))
+                print('type(outdata)', type(outdata))
+                print('nib.load(whitematter_path).get_fdata()', type(nib.load(whitematter_path).get_fdata()))
                 outdata = normalize_by_whitematter(
                     outdata * mask.get_fdata(),
                     histogram_reference * mask.get_fdata(),
