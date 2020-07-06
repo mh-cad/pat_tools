@@ -347,19 +347,17 @@ class Timeline:
             ants.affine_registration(n4_path, ref_path, out_path).wait()
 
             mask = nib.load(os.path.join(self.path, self.brain_mask))
+            hist_ref = nib.load(os.path.join(self.path, histogram_reference))
             output = nib.load(out_path)
-            outdata = output.get_fdata()
+            outdata = output.get_fdata() * 1 # maybe this will force into an ndarray?
             if apply_mask:
                 outdata *= mask.get_fdata()
             # normalise whitematter intensity
             if self.whitematter_mask != None and self.brain_mask != None and histogram_reference != None:
                 whitematter_path = os.path.join(self.path, self.whitematter_mask)
-                print('type(mask.get_fdata())', type(mask.get_fdata()))
-                print('type(outdata)', type(outdata))
-                print('nib.load(whitematter_path).get_fdata()', type(nib.load(whitematter_path).get_fdata()))
                 outdata = normalize_by_whitematter(
                     outdata * mask.get_fdata(),
-                    histogram_reference * mask.get_fdata(),
+                    hist_ref.get_fdata() * mask.get_fdata(),
                     nib.load(whitematter_path).get_fdata())
 
             output = nib.Nifti1Image(outdata, output.affine, output.header)
