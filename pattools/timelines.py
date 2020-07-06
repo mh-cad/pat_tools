@@ -228,7 +228,7 @@ class Timeline:
             self.__dict__ = json.loads(content)
             self.path = path # The saved path may be different but this is where we loaded it.
             #These filters will load as dicts but we want them to not be. So we need to parse 'em.
-            parsed_filters = [];
+            parsed_filters = []
             for filter_dict in self.__dict__['filters']:
                 f = pattools._timelinefilter.Filter(filter_dict['name'])
                 for key in filter_dict:

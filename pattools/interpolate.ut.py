@@ -23,6 +23,10 @@ class TestInterpolation(unittest.TestCase):
     def write_files(self, tmp_dir):
         # Save generated test files (to avoid the redundant loading time
         # for the tool pipeline).
+        # We need to add the dates to the path because the interpolator 
+        # will assume the date is encoded in the path. 
+        # TODO: This should probably not be an assumption if the interpolator can be used
+        # outside of the timelines module.
         os.mkdir(os.path.join(tmp_dir, '20200101'))
         os.mkdir(os.path.join(tmp_dir, '20200128'))
         start_path = os.path.join(tmp_dir, '20200101','start.nii')
@@ -43,7 +47,6 @@ class TestInterpolation(unittest.TestCase):
         # Sanity check the data
         self.assertEqual(datetime.date(2020,1,11),interpolated_dates[10])
             
- 
     def test_linear_interpolator(self):
         with TemporaryDirectory() as tmp_dir:
             start_path, end_path, mask_path = self.write_files(tmp_dir)
@@ -61,9 +64,38 @@ class TestInterpolation(unittest.TestCase):
             self.assertEqual(interpolated_data[5][1][0], 0)
             self.assertEqual(interpolated_data[5][1][1], 11)
             self.assertEqual(interpolated_data[5][1][2], 0)
-    
-    def test_3(self):
-        self.assertEqual(0, 0)
+
+            # Test for date not in current range...
+            start_date = datetime.date(2020,1,1)
+            end_date = datetime.date(2020,1,28)
+            data = interp.data_for_date(
+                datetime.date(2019,12,1), # Date is not in range
+                (start_date, end_date),
+                (start_path, end_path),
+                1) # No mask
+            
+            # The output is out of range, so the expected result is zero.
+            print('data:', data)
+            self.assertEqual(data[1][0], data[1][1])
+            self.assertEqual(data[1][1], data[1][2])
+            self.assertEqual(data[1][2], 0)
+
+            # Test for selecting closest rather than before and after (bug)
+            mid_date = datetime.date(2020,1,27)
+            img_mid = nib.Nifti1Image(np.array([2,2,2]), np.eye(4))
+            os.mkdir(os.path.join(tmp_dir, '20200127'))
+            mid_path = os.path.join(tmp_dir, '20200127','mid.nii')
+            nib.save(img_mid, mid_path)
+
+            data = interp.data_for_date(
+                datetime.date(2020,1,26), # Date is not in range
+                (start_date, mid_date, end_date),
+                (start_path, mid_path, end_path),
+                1) # No mask
+
+            self.assertGreater(data[1][1], 1)
+            self.assertLess(data[1][1], 2)
+
 
 if __name__ == '__main__':
     unittest.main()

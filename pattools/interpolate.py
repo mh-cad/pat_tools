@@ -11,9 +11,6 @@ import multiprocessing
  #############################
 
 class _AbstractInterpolator:
-    '''Base abstration for interpolators'''
-    def interpolate(self, data1, data2, ratio):
-        raise Exception("This is the base interpolator class. Use an implementation")
 
     @staticmethod
     def _date_from_path(path):
@@ -34,18 +31,61 @@ class _AbstractInterpolator:
         return result_dates
 
 
-    def _data_for_date(self, date, study_dates, study_paths, mask_data):
+    def data_for_date(self, date, study_dates, study_paths, mask_data):
         ''' This method will return the interpolated data for a given date.
             We are assuming that the study_dates and study_paths are in the same order, which is sorted by date '''
+        raise Exception("This is the base interpolator class. Use an implementation")
+        
+
+    def interpolated_data_from_dates(self, image_paths, mask_path, dates):
+        study_dates = [_AbstractInterpolator._date_from_path(p) for p in image_paths]
+        mask_data = None
+        if mask_path != None and os.path.exists(mask_path):
+            mask_data = nib.load(mask_path).get_fdata()
+        else:
+            print('mask path ' + str(mask_path) + ' does not exist, using no mask')
+            mask_data = 1
+
+        for date in dates:
+            d, d2 = self.data_for_date(date, study_dates, image_paths, mask_data)
+            yield d, d2
+
+    def interpolated_data_from_delta(self, image_paths, mask_path, delta_days):
+        ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
+        all_dates = _AbstractInterpolator.interpolated_dates([_AbstractInterpolator._date_from_path(p) for p in image_paths], delta_days)
+        return self.interpolated_data_from_dates(image_paths, mask_path, all_dates)
+
+
+
+class LinearInterpolator(_AbstractInterpolator):
+    '''Interpolates data linearly'''
+    def __init__(self):
+        super().__init__()
+
+    def interpolate(self, data1, data2, ratio):
+        return data1 * (1-ratio) + data2 * ratio
+    
+    def data_for_date(self, date, study_dates, study_paths, mask_data):
         if date in study_dates:
             data = nib.load(study_paths[study_dates.index(date)]).get_fdata() * mask_data
             return (date, data)
         else:
-            # Get the closest two study dates
+            # Get the closest two study dates (before and after)
             np_study_dates = np.unique(np.asarray(study_dates))
-            closest_dates = np.argsort(np.abs(np_study_dates - date))[0:2]
-            idx_before = min(closest_dates)
-            idx_after = max(closest_dates)
+            np_study_dates = np.argsort(np.abs(np_study_dates - date))
+            idx_before = None
+            idx_after = None
+            for idx in np_study_dates:
+                if idx_before == None and study_dates[idx] < date:
+                    idx_before = idx
+                elif idx_after == None and study_dates[idx] > date:
+                    idx_after = idx
+            
+            # If the date doesn't fall between two dates it's going to be meaningless
+            if (idx_before == None or idx_after == None):
+                # So we'll just return a zero matrix based on the first entry
+                return (date, nib.load(study_paths[0]).get_fdata() * 0)
+
             # Load the data from those dates
             before_data = nib.load(study_paths[idx_before]).get_fdata() * mask_data
             after_data = nib.load(study_paths[idx_after]).get_fdata() * mask_data
@@ -60,82 +100,9 @@ class _AbstractInterpolator:
             # yield the interpolated result
             return (date, self.interpolate(before_data, after_data, ratio))
 
-    def interpolated_data_from_dates(self, image_paths, mask_path, dates):
-        study_dates = [_AbstractInterpolator._date_from_path(p) for p in image_paths]
-        mask_data = None
-        if mask_path != None and os.path.exists(mask_path):
-            mask_data = nib.load(mask_path).get_fdata()
-        else:
-            print('mask path ' + str(mask_path) + ' does not exist, using no mask')
-            mask_data = 1
-
-        for date in dates:
-            d, d2 = self._data_for_date(date, study_dates, image_paths, mask_data)
-            yield d, d2
-
-    def interpolated_data_from_delta(self, image_paths, mask_path, delta_days):
-        ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
-        all_dates = _AbstractInterpolator.interpolated_dates([_AbstractInterpolator._date_from_path(p) for p in image_paths], delta_days)
-        return self.interpolated_data_from_dates(image_paths, mask_path, all_dates)
-        # We only want to yield data2 on the final pair, so we'll need a reference
-        #data2 = None
-        #date2 = None
-        ## Handle the empty case
-        #if len(image_paths) == 0: return
-        ## Handle the case of 1 image
-        #if len(image_paths) == 1:
-        #    if mask_path != None and os.path.exists(mask_path):
-        #        yield (_AbstractInterpolator._date_from_path(image_paths[0]), nib.load(image_paths[0]).get_fdata() * nib.load(mask_path).get_fdata())
-        #    else:
-        #        raise Exception('Path ' + mask_path + ' does not exist')
-        #    return
-        ## Handle 2 or more images
-        #for p1, p2 in zip(image_paths[:-1], image_paths[1:]):
-        #    # Do some error checking...
-        #    if not os.path.exists(p1):
-        #        raise Exception('Path ' + p1 + ' does not exist')
-        #    if not os.path.exists(p2):
-        #        raise Exception('Path ' + p2 + ' does not exist')
-        #    if mask_path != None and os.path.exists(mask_path) == False:
-        #        raise Exception('Path ' + mask_path + ' does not exist')
-
-        #    # Open the nifti file
-        #    p1img = nib.load(p1)
-        #    p2img = nib.load(p2)
-        #    # Get the data
-        #    data1 = p1img.get_fdata()
-        #    data2 = p2img.get_fdata()
-
-        #    if (mask_path != None):
-        #        mask_img = nib.load(mask_path)
-        #        mask_data = mask_img.get_fdata()
-        #        data1 *= mask_data
-        #        data2 *= mask_data
-
-        #    # If each delta represents a step, we calculate how many steps there
-        #    # are between the current scans
-        #    date1 = _AbstractInterpolator._date_from_path(p1)
-        #    date2 = _AbstractInterpolator._date_from_path(p2)
-        #    window = (date2 - date1)
-        #    steps = int(window.days / delta_days)
-
-        #    for i in range(0, steps):
-        #        ratio = i/steps
-        #        # Yield interpolated (includes data1, since the ratio range is [0,1)
-        #        yield (date1 + timedelta(days=int(i * delta_days)), self.interpolate(data1, data2, ratio))
-        ## Yield the last series
-        #yield (date2, data2)
 
 
-class LinearInterpolator(_AbstractInterpolator):
-    '''Interpolates data linearly'''
-    def __init__(self):
-        super().__init__()
-
-    def interpolate(self, data1, data2, ratio):
-        return data1 * (1-ratio) + data2 * ratio
-
-class NearestNeighbourInterpolator(_AbstractInterpolator):
+class NearestNeighbourInterpolator(LinearInterpolator):
     '''Returns the nearest real scan'''
     def __init__(self):
         super().__init__()
@@ -144,7 +111,7 @@ class NearestNeighbourInterpolator(_AbstractInterpolator):
         if ratio >= 0.5: return data2
         return data1
 
-class NullInterpolator(_AbstractInterpolator):
+class NullInterpolator(LinearInterpolator):
     '''The null iterpolator returns only the masked data (with no interpolation)'''
     def __init__(self):
         super().__init__()
