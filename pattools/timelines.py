@@ -2,7 +2,7 @@
 
 from pattools.pacs import Series, Patient
 from pattools.resources import Atlas
-from pattools.image import histogram_match
+from pattools.image import histogram_match, normalize_by_whitematter
 import nibabel as nib
 import numpy as np
 import json
@@ -67,7 +67,8 @@ class Timeline:
     path = None #Path to the root timeline folder
     start_date = None #First date covered by timeline
     end_date = None #Last date covered by timeline
-    brain_mask = None #Brain mask which will be used
+    brain_mask = None #Brain mask which will be used\
+    whitematter_mask = None #Whitematter mask
     registration_reference = None #Reference scan for registration
     is_processed = False #Is the pre-processing up to date?
     is_rendererd = False
@@ -297,9 +298,11 @@ class Timeline:
             # save atlas to tmp_dir and mask to timeline
             t2_path = os.path.join(tmp_dir, 't2.nii.gz')
             mask_path = os.path.join(tmp_dir, 'mask.nii.gz')
+            whitematter_mask_path = os.path.join(tmp_dir, 'whitematter_mask.nii.gz')
 
             nib.save(atlas.t2, t2_path)
             nib.save(atlas.mask, mask_path)
+            nib.save(atlas.whitematter_mask, whitematter_mask_path)
 
             # Bias correction and registration
             print('        N4 Bias correction for reference image...')
@@ -321,9 +324,13 @@ class Timeline:
             # Apply affine transform then warp to put mask in registered space
             out_path = os.path.join(self.path, 'brain_mask.nii.gz')
             ants.apply_transform(mask_path, n4_path, affine_mat, out_path).wait()
+            white_out_path = os.path.join(self.path, 'whitematter_mask.nii.gz')
+            ants.apply_transform(whitematter_mask_path, n4_path, affine_mat, white_out_path).wait()
+
             # Save metadata
             self.registration_reference = 'registration_reference.nii.gz'
             self.brain_mask = 'brain_mask.nii.gz'
+            self.whitematter_mask = 'whitematter_mask.nii.gz'
             self.save()
             print('done.')
 
@@ -344,9 +351,13 @@ class Timeline:
             outdata = output.get_fdata()
             if apply_mask:
                 outdata *= mask.get_fdata()
-            # histogram matching to normalise intensity
-            if histogram_reference != None and mask != None:
-                histogram_match(outdata, nib.load(ref_path).get_fdata() * mask.get_fdata())
+            # normalise whitematter intensity
+            if self.whitematter_mask != None:
+                whitematter_path = os.path.join(self.path, self.whitematter_mask)
+                outdata = normalize_by_whitematter(
+                    outdata,
+                    nib.load(ref_path).get_fdata() * mask.get_fdata(),
+                    nib.load(whitematter_path).get_fdata())
 
             output = nib.Nifti1Image(outdata, output.affine, output.header)
             nib.save(output, output_path)

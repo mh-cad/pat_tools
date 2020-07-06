@@ -20,6 +20,7 @@ class Atlas:
     t1 = None #T1 nifti
     t2 = None #T2 nifti
     mask = None #mask nifti
+    whitematter_mask = None
 
     class MNI:
         mni_url = "http://www.bic.mni.mcgill.ca/~vfonov/icbm/2009/old/mni_icbm152_nlin_asym_09c_nifti.zip"
@@ -69,8 +70,20 @@ class Atlas:
                             info.filename = 'mni_icbm152_t1_tal_nlin_asym_09c_mask.nii'
                             z.extract(info, target_dir)
 
+            # Try to find whitematter mask file
+            whitematter_path = None
+            if os.path.isfile(os.path.join(target_dir, 'mni_icbm152_wm_tal_nlin_asym_09c.nii')):
+                whitematter_path = os.path.join(target_dir, 'mni_icbm152_wm_tal_nlin_asym_09c.nii')
+            elif os.path.isfile(os.path.join(target_dir, 'mni_icbm152_wm_tal_nlin_asym_09c.zip')):
+                mask_path = os.path.join(target_dir, 'mni_icbm152_wm_tal_nlin_asym_09c.nii')
+                with ZipFile(os.path.join(target_dir, 'mni_icbm152_wm_tal_nlin_asym_09c.zip')) as z:
+                    for info in z.infolist():
+                        if info.filename == 'mni_icbm152_wm_tal_nlin_asym_09c/mni_icbm152_wm_tal_nlin_asym_09c.nii':
+                            info.filename = 'mni_icbm152_wm_tal_nlin_asym_09c.nii'
+                            z.extract(info, target_dir)
+
             # Take a crack at downloading if we can't find a file
-            if (t1_path == None or t2_path == None or mask_path == None) and download_if_not_found:
+            if (t1_path == None or t2_path == None or mask_path == None or whitematter_path == None) and download_if_not_found:
                 return self.download(target_dir)
 
             #Popualte atlas
@@ -78,5 +91,7 @@ class Atlas:
             atlas.t1 = nib.load(t1_path)
             atlas.t2 = nib.load(t2_path)
             atlas.mask = nib.load(mask_path)
+            if whitematter_path != None: # Whitematter path is optional at the moment
+                atlas.whitematter_mask = nib.load(whitematter_path)
 
             return atlas
