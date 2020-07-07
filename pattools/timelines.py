@@ -20,14 +20,16 @@ class FileMetadata:
     file = None
     processed_file = None
     filter_name = None
+    study_date = None
     study_uid = None
     series_uid = None
     series_description = None
 
-    def __init__(self, file=None, processed_file=None, filter_name=None, study_uid=None, series_uid=None, series_description=None):
+    def __init__(self, file=None, processed_file=None, filter_name=None, study_date=None, study_uid=None, series_uid=None, series_description=None):
         self.file = file
         self.processed_file = processed_file
         self.filter_name = filter_name
+        self.study_date = study_date
         self.study_uid = study_uid
         self.series_uid = series_uid
         self.series_description = series_description
@@ -37,6 +39,7 @@ class FileMetadata:
             'file              : ' + str(self.study_uid) +os.linesep+
             'processed_file    : ' + str(self.processed_file) +os.linesep+
             'filter_name       : ' + str(self.filter_name) +os.linesep+
+            'study_date       : ' + str(self.study_date) +os.linesep+
             'study_uid         : ' + str(self.study_uid) +os.linesep+
             'series_uid        : ' + str(self.series_uid) +os.linesep+
             'series_description: ' + str(self.series_description))
@@ -55,6 +58,8 @@ class FileMetadata:
                 fm.study_uid = line.split(':')[1].strip()
             elif line.startswith('series_uid'):
                 fm.series_uid = line.split(':')[1].strip()
+            elif line.startswith('study_date'):
+                fm.study_date = line.split(':')[1].strip()
             if line.startswith('series_description'):
                 fm.series_description = line.split(':')[1].strip()
         return fm
@@ -188,6 +193,7 @@ class Timeline:
                             data = FileMetadata(
                                 file=filter.name + ".nii.gz",
                                 processed_file=filter.name + ".processed.nii.gz",
+                                study_date=study.study_date,
                                 filter_name=filter.name,
                                 study_uid=series.study_uid,
                                 series_uid=series.series_uid,
@@ -375,7 +381,7 @@ class Timeline:
         self._load_datamap()
         histogram_references = {}
         for fm in self.datamap[list(self.datamap)[-1]]:
-            histogram_references[fm.filter_name] = fm.file
+              histogram_references[fm.filter_name] = os.path.join(self.path, fm.date, fm.file)
 
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
