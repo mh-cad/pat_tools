@@ -112,9 +112,13 @@ class Timeline:
 
         to_clean = []
         for root, folders, files in os.walk(self.path):
+            #Clean the directory if the stucture isn't well formed
             if (len(folders) == 0
                 and len([f for f in files if f.endswith('.nii.gz') or f.endswith('.nii')])
                     < len([f for f in files if f.endswith('.metadata') and f != 'timeline.metadata'])):
+                to_clean.append(os.path.join(self.path, root))
+            # Or if there are no matching studies
+            if (len(folders) == 0 and len(files == 0)):
                 to_clean.append(os.path.join(self.path, root))
 
         print('cleaning:', to_clean)
