@@ -381,7 +381,7 @@ class Timeline:
         self._load_datamap()
         histogram_references = {}
         for fm in self.datamap[list(self.datamap)[-1]]:
-              histogram_references[fm.filter_name] = os.path.join(self.path, fm.date, fm.file)
+              histogram_references[fm.filter_name] = os.path.join(self.path, fm.study_date, fm.file)
 
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
