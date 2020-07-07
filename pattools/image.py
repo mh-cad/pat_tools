@@ -87,9 +87,6 @@ def normalize_by_whitematter(img, ref_img, white_matter_mask):
     # Then we're going to perform z-score normalisation using the whitematter
     # masked means and std deviation. This should get the whitematter values
     # as close as possible.
-    print('type(ref_img)', type(ref_img))
-    print('type(img)', type(img))
-    print('type(white_matter_mask)', type(white_matter_mask))
     masked_ref = ref_img * white_matter_mask
     masked_img = img * white_matter_mask
     mrstd = masked_ref.std()
