@@ -79,6 +79,7 @@ def mprage_cplus_filter():
     filter.scorecard.append(ScorecardElement('fused', -35))
     filter.scorecard.append(ScorecardElement('tv', -35))
     filter.scorecard.append(ScorecardElement('cv', -35))
+    filter.scorecard.append(ScorecardElement('lv', -35))
     filter.threshold = 100
     return filter
 
@@ -102,6 +103,7 @@ def mprage_cminus_filter():
     filter.scorecard.append(ScorecardElement('fused', -35))
     filter.scorecard.append(ScorecardElement('tv', -35))
     filter.scorecard.append(ScorecardElement('cv', -35))
+    filter.scorecard.append(ScorecardElement('lv', -35))
     filter.threshold = 100
     return filter
 
