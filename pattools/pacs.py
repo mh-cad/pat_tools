@@ -296,6 +296,7 @@ def find_series_from_study(study):
     ds.StudyDate = ''
     ds.SeriesTime=''
     ds.StudyDescription = '*'
+
     results = cfind(study.scp_settings, ds, query_model='S')
     series = []
     for result in results:
