@@ -118,7 +118,7 @@ class Timeline:
                     < len([f for f in files if f.endswith('.metadata') and f != 'timeline.metadata'])):
                 to_clean.append(os.path.join(self.path, root))
             # Or if there are no matching studies
-            if (len(folders) == 0 and len(files == 0)):
+            if len(folders) == 0 and len(files) == 0:
                 to_clean.append(os.path.join(self.path, root))
 
         print('cleaning:', to_clean)
@@ -347,6 +347,7 @@ class Timeline:
     def process_file(self, input_path, output_path, histogram_reference=None, apply_mask=False):
         '''Process (biascorrect, register, etc.) a single file'''
         # These imports can complain on import, so we'll only get them now.
+        print('Processing: ', input_path)
         from pattools import ants
         with TemporaryDirectory() as tmp_dir:
             n4_path = os.path.join(tmp_dir, 'n4.nii')
@@ -357,21 +358,29 @@ class Timeline:
             ants.affine_registration(n4_path, ref_path, out_path).wait()
 
             mask = nib.load(os.path.join(self.path, self.brain_mask))
-            hist_ref = nib.load(os.path.join(self.path, histogram_reference))
             output = nib.load(out_path)
             outdata = output.get_fdata() * 1 # maybe this will force into an ndarray?
             if apply_mask:
                 outdata *= mask.get_fdata()
-            # normalise whitematter intensity
-            if self.whitematter_mask != None and self.brain_mask != None and histogram_reference != None:
-                whitematter_path = os.path.join(self.path, self.whitematter_mask)
-                outdata = normalize_by_whitematter(
-                    outdata * mask.get_fdata(),
-                    hist_ref.get_fdata() * mask.get_fdata(),
-                    nib.load(whitematter_path).get_fdata())
 
             output = nib.Nifti1Image(outdata, output.affine, output.header)
             nib.save(output, output_path)
+
+    def normalize_file(self, file, reference_file):
+         # normalise whitematter intensity
+        if self.whitematter_mask != None and self.brain_mask != None:
+            wm_mask = nib.load(os.path.join(self.path, self.whitematter_mask)).get_fdata()
+            mask = nib.load(os.path.join(self.path, self.brain_mask)).get_fdata()
+            img = nib.load(file)
+            img_data = img.get_fdata()
+            ref_data = nib.load(reference_file).get_fdata()
+            outdata = normalize_by_whitematter(
+                img_data * mask,
+                ref_data * mask,
+                wm_mask)
+
+            output = nib.Nifti1Image(outdata, output.affine, output.header)
+            nib.save(output, file)
 
     def process(self):
         '''Process (bias correct, register to reference, etc.) all image files'''
@@ -384,14 +393,29 @@ class Timeline:
         files_to_process = []
         self._load_datamap()
         histogram_references = {}
-        for fm in self.datamap[list(self.datamap)[-1]]:
-              histogram_references[fm.filter_name] = os.path.join(self.path, fm.study_date, fm.file)
+        # TODO -- We seem to be selecting the most recent study as the histogram match
+        # this will break on update
+        for filter in self.filters:
+            histogram_ref_path = os.path.join(self.path, f'intensity_ref_{filter.name}.nii.gz')
+            if not os.path.exists(histogram_ref_path):
+                candidate_path = ""
+                for study_date in self.datamap:
+                    for fm in self.datamap[study_date]:
+                        if fm.filter_name == filter.name:
+                            candidate_path = os.path.join(self.path, study_date, fm.processed_file)
+                            if not os.path.exists(candidate_path):
+                                candidate_path = os.path.join(self.path, study_date, fm.file)
+                try:
+                    shutil.copyfile(candidate_path, histogram_ref_path)
+                except:
+                    print('Failed to copy histogram reference ', candidate_path)
+            histogram_references[filter.name] = histogram_ref_path
 
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
             for filemeta in self.datamap[study]:
-                print(os.path.exists(os.path.join(study_path, filemeta.processed_file)))
-                if not os.path.exists(os.path.join(study_path, filemeta.processed_file)):
+                print(os.path.join(study_path, filemeta.processed_file), 'exists?', os.path.exists(os.path.join(study_path, filemeta.processed_file)))
+                if os.path.exists(os.path.join(study_path, filemeta.processed_file)) == False and os.path.exists(os.path.join(study_path, filemeta.file)) == True:
                     input = os.path.join(self.path, study, filemeta.file)
                     output = os.path.join(self.path, study, filemeta.processed_file)
                     filter_name = filemeta.filter_name
@@ -400,7 +424,11 @@ class Timeline:
         print('Processing', len(files_to_process), 'files...')
         files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
         for input, output, histogram_reference in files_to_process:
-            self.process_file(input, output, histogram_reference=histogram_reference)
+            self.process_file(input, output)
+
+        # Now that all the files are processed (including the histogram references) we can normalize
+        for input, output, histogram_reference in files_to_process:
+            self.normalize_file(output, histogram_reference)
 
     def study_dates(self):
         '''Returns all study dates, whether we have a scan or not'''
