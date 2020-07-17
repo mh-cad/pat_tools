@@ -158,31 +158,37 @@ class Renderer:
                 if fm.filter_name == filter.name])
         return files
 
-    def render(self, timeline, path):
+    def render(self, timeline, path, overwrite=True):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
+        print('timeline.path', timeline.path)
+        print('timeline.whitematter_mask', timeline.whitematter_mask)
         mask_path = None
+        whitematter_mask_path = None
         if timeline.path != None and timeline.brain_mask != None:
              mask_path = os.path.join(timeline.path, timeline.brain_mask)
+        if timeline.whitematter_mask != None:
+            whitematter_mask_path = os.path.join(timeline.path, timeline.whitematter_mask)
 
         for filter in timeline.filters:
             files = Renderer._get_files(timeline, filter)
-            self.render_all(files, mask_path, os.path.join(path, filter.name), timeline.study_dates())
+            self.render_all(
+                files,
+                mask_path, 
+                os.path.join(path, filter.name), 
+                timeline.study_dates(), 
+                whitematter_mask_path=whitematter_mask_path,
+                overwrite=overwrite)
 
     def render_new_studies(self, timeline, path):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        mask_path = None
-        if timeline.path != None and timeline.brain_mask != None:
-             mask_path = os.path.join(timeline.path, timeline.brain_mask)
-        for filter in timeline.filters:
-            print('filter:', filter)
-            files = Renderer._get_files(timeline, filter)
-            self.render_new(files, mask_path, os.path.join(path, filter.name), timeline.study_dates())
+        self.render(timeline, path, overwrite=False)
 
     @staticmethod
     def write_images(data, folder, slice_type, min_val, max_val):
         if not os.path.exists(folder):
             os.makedirs(folder, mode=0o777)
-        data_cp = np.copy(data)
+        #data_cp = np.copy(data)
+        data_cp = np.flip(data, 0)
         count = 0
         if slice_type == 'sag':
             count = data.shape[0]
@@ -208,49 +214,63 @@ class Renderer:
         slice[0,0] = max
         slice[0,1] = min
         output = np.flip(slice.T).copy()
-        np.clip(output, min, max)
+        #np.clip(output, min, max)
         imageio.imwrite(location, output)
 
     @staticmethod
-    def _render_volume(date, volume, path, overwrite=True):
+    def _render_volume(date, volume, path, overwrite=True, whitematter_mask=1):
         '''Render every slice in a volume along 3 axis.'''
-        min_val = np.amin(volume)
+        # Set the min to be 0
+        print('np.amin(volume)', np.amin(volume))
+        volume = volume - np.amin(volume)
+        # Make sure the curve falls between 0 and 400
         max_val = np.amax(volume)
+        print('max_val', max_val)
+        if max_val > 255:
+            volume = volume / max_val * 255
+        # Make the whitematter median value 127
+        #if type(whitematter_mask) != type(int): #i.e. check that it's an ndarray but too lazy to look up syntax at 7:20pm
+        #    wm_volume = volume * whitematter_mask
+        #    wm_median = np.mean(wm_volume)
+        #    print('wm_median', wm_median)
+        #    wm_delta = min(255, max_val) / 15 - wm_median # This is the delta between the desired value (half of the bitspace) and the current value.
+        #    print('wm_delta', wm_delta)
+        #    volume = volume + wm_delta
+        # Set the min/max to a valid range
+        #np.clip(volume, 0, 255, volume)
+        volume = volume.astype(np.uint8)
+
         # Output paths
         sag_path = os.path.join(path, date.strftime('%Y%m%d'), 'sag')
         cor_path = os.path.join(path, date.strftime('%Y%m%d'), 'cor')
         ax_path = os.path.join(path, date.strftime('%Y%m%d'), 'ax')
         # Write images if the folder doesn't exist or overwrite is true
         if overwrite or os.path.exists(sag_path) == False:
-            Renderer.write_images(volume, sag_path, 'sag', min_val, max_val)
+            Renderer.write_images(volume, sag_path, 'sag', 0, 255)
         if overwrite or os.path.exists(cor_path) == False:
-            Renderer.write_images(volume, cor_path, 'cor', min_val, max_val)
+            Renderer.write_images(volume, cor_path, 'cor', 0, 255)
         if overwrite or os.path.exists(ax_path) == False:
-            Renderer.write_images(volume, ax_path, 'ax', min_val, max_val)
+            Renderer.write_images(volume, ax_path, 'ax', 0, 255)
 
-    def render_all(self, files, mask_path, path, dates):
-        #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
+    def render_all(self, files, mask_path, path, dates, whitematter_mask_path=None, overwrite=True):
+        # Load the whitematter mask to use (or use 1, i.e. no mask if none is found)
+        whitematter_mask = 1
+        print('??whitematter_mask_path', whitematter_mask_path)
+        if whitematter_mask_path !=  None:
+            whitematter_mask = nib.load(whitematter_mask_path).get_fdata()
+
         '''Render all volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=overwrite, whitematter_mask=whitematter_mask)
             for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
 
-    def render_new(self, files, mask_path, path, dates):
-        '''Render new volumes using supplied brain mask'''
-        Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path, overwrite=False)
-            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
+    def render_new(self, files, mask_path, path, dates,  whitematter_mask_path=None):
+        self.render_all(files, mask_path, path, dates, whitematter_mask_path=whitematter_mask_path, overwrite=False)
 
-class VisTarsierRenderer(Renderer):
-    def render_all(self, files, mask_path, path, dates):
-        #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
-        '''Render all volumes using supplied brain mask'''
-        Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
-            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
-
-    def render_new(self, files, mask_path, path, dates):
-        '''Render new volumes using supplied brain mask'''
-        Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path, overwrite=False)
-            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
+#class VisTarsierRenderer(Renderer):
+#    def render_all(self, files, mask_path, path, dates, whitematter_mask_path=None, overwrite=True):
+#        #dates = _AbstractInterpolator.interpolated_dates(self.timeline.study_dates)
+#        '''Render all volumes using supplied brain mask'''
+#        Parallel(n_jobs=multiprocessing.cpu_count())(
+#            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
+#            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
