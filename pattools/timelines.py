@@ -90,8 +90,7 @@ class Timeline:
             self.patient_id = os.path.basename(os.path.normpath(path))
 
         # Try to load from path...
-        if (os.path.isfile(os.path.join(path,'timeline.metadata'))):
-            self.load()
+        self.load()
 
         # If that doesn't work, try to create from PACS
         if not os.path.exists(path): os.makedirs(path, mode=0o777)
@@ -439,3 +438,12 @@ class Timeline:
         '''Sets a manually selected series for a given filter/study combination'''
         self.manual_studies[filter_name, study_date] = series
 
+    def files_for_filter(self, filter_name):
+        '''Returns the file metadata objects for a given filtername, sorted by date'''
+        result = []
+        self.load() # Load datamap from disk
+        for study in self.datamap.keys():   
+            for filemeta in self.datamap[study]:
+                if filemeta.filter_name == filter_name:
+                    result.append(filemeta)
+        return result.sort(key=lambda fm: fm.study_date)
