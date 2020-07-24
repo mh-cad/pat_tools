@@ -446,4 +446,6 @@ class Timeline:
             for filemeta in self.datamap[study]:
                 if filemeta.filter_name == filter_name:
                     result.append(filemeta)
-        return result.sort(key=lambda fm: fm.study_date)
+
+        result.sort(key=lambda fm: fm.study_date)
+        return result
