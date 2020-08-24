@@ -76,14 +76,14 @@ class Timeline:
     whitematter_mask = None #Whitematter mask
     registration_reference = None #Reference scan for registration
     is_processed = False #Is the pre-processing up to date?
-    is_rendererd = False
+    is_rendered = False
     datamap = None #In-memory map of the data structure
     #^^ for now we'll try to use the file system to guide us
     manual_studies = None #This is a collection of studies which have been manually set to override the autmated matching.
     filters = None #Types of scans to include (defaut FLAIR and MPRAGE)
 
     def __init__(self, path, patient_id=None):
-        self.path = path
+        self.path = os.path.abspath(path)
         self.patient_id = patient_id
         # If we don't have a patient ID we're assuming patient id as the folder name
         if patient_id == None:
@@ -106,7 +106,8 @@ class Timeline:
     def clean(self):
         '''Removes any folders where the number of metadata files and image files don't match'''
         self.datamap = {}
-
+        print('self.path',self.path)
+        print(os.path.exists(self.path))
         if not os.path.exists(self.path): return
 
         to_clean = []
@@ -381,6 +382,61 @@ class Timeline:
             output = nib.Nifti1Image(outdata, output.affine, output.header)
             nib.save(output, file)
 
+    def normalize_data(self, filter_name, brain_mask=True, do_znorm=True, do_histogram_match=True):
+        '''This will generate a slice-wise normalized set of data (which you'll need to fit in RAM)'''
+        print('Normalizing data for filter', filter_name)
+        
+        mask = nib.load(os.path.join(self.path, self.brain_mask)).get_fdata() if brain_mask else 1.
+        files = [
+            os.path.join(self.path, fm.study_date, fm.processed_file)
+            for fm in self.files_for_filter(filter_name)]
+
+        if len(files) == 0:
+            print('No files for filter', filter_name)
+            return
+
+        # Work out the dimensions for our output
+        first_img = nib.load(files[0])
+        first_data = first_img.get_fdata()
+
+        # We're going to try to fit the whole thing into memory because we have tonnes of RAM
+        # We could refactor this to work via HDD if that's an issue but you'd probably see thrashing.
+        # The output ndarray will be coronal, study index (time), then the two other spatial dims (should check).
+        output = np.zeros((first_data.shape[0], len(files),first_data.shape[1],first_data.shape[2]))
+
+        # Load all the timeline data into a single array (better have the memory for it)
+        for i, file in enumerate(files):
+            data = nib.load(file).get_fdata()
+            for slice_index in range(data.shape[0]):
+                output[slice_index,i,:,:] = data[slice_index,:,:] * mask[slice_index,:,:]
+        print(f'Loaded {len(files)} files in {output.size*output.itemsize / (1024.*1024.)}MB of RAM')
+
+        # Background threshold for Z-Norm
+        background_threshold = 20
+        for slice_index in range(output.shape[0]):
+            # We're going to take the most recent study as our reference
+            bg_mask = output[slice_index,-1,:,:] > background_threshold
+            # Skip the background only slices.
+            if (np.sum(bg_mask.astype(float)) <= 0):
+                continue
+            mean0 = np.mean(output[slice_index,-1,:,:][bg_mask])
+            std0 = np.std(output[slice_index,-1,:,:][bg_mask])
+            for i in range(0, output.shape[1]): # Where i is the study index
+                bg_mask = output[slice_index,i,:,:] > background_threshold
+                sliceI = output[slice_index,i,:,:]
+                if len(sliceI) != 0:
+                    meanI = np.mean(output[slice_index,i,:,:][bg_mask])
+                    stdI = np.std(output[slice_index,i,:,:][bg_mask])
+                    # Apply Z-Norm and Histogram Matching
+                    if do_znorm: 
+                        output[slice_index,i,:,:] = (output[slice_index,i,:,:] - meanI) / stdI * std0 + mean0
+                    if do_histogram_match:
+                        output[slice_index,i,:,:] = histogram_match(output[slice_index,i,:,:], output[slice_index,0,:,:])
+
+        for i, f in enumerate(files):
+            img = nib.load(f)
+            nib.save(nib.Nifti1Image(output[:,i,:,:], img.affine, img.header), f)
+
     def process(self):
         '''Process (bias correct, register to reference, etc.) all image files'''
         if (self.registration_reference == None
@@ -391,6 +447,7 @@ class Timeline:
 
         files_to_process = []
         self._load_datamap()
+        # TODO -- Not currently using the given histogram reference, need to either remove or use...
         histogram_references = {}
         # TODO -- We seem to be selecting the most recent study as the histogram match
         # this will break on update
@@ -422,12 +479,12 @@ class Timeline:
         # Add a progress bar
         print('Processing', len(files_to_process), 'files...')
         files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
-        for input, output, histogram_reference in files_to_process:
+        for input, output, _ in files_to_process: # TODO: Discarding histogram_reference
             self.process_file(input, output)
 
         # Now that all the files are processed (including the histogram references) we can normalize
-        for input, output, histogram_reference in files_to_process:
-            self.normalize_file(output, histogram_reference)
+        for fil in self.filters:
+            self.normalize_data(fil.name)
 
     def study_dates(self):
         '''Returns all study dates, whether we have a scan or not'''

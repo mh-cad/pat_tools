@@ -228,16 +228,6 @@ class Renderer:
         print('max_val', max_val)
         if max_val > 255:
             volume = volume / max_val * 255
-        # Make the whitematter median value 127
-        #if type(whitematter_mask) != type(int): #i.e. check that it's an ndarray but too lazy to look up syntax at 7:20pm
-        #    wm_volume = volume * whitematter_mask
-        #    wm_median = np.mean(wm_volume)
-        #    print('wm_median', wm_median)
-        #    wm_delta = min(255, max_val) / 15 - wm_median # This is the delta between the desired value (half of the bitspace) and the current value.
-        #    print('wm_delta', wm_delta)
-        #    volume = volume + wm_delta
-        # Set the min/max to a valid range
-        #np.clip(volume, 0, 255, volume)
         volume = volume.astype(np.uint8)
 
         # Output paths
@@ -274,3 +264,5 @@ class Renderer:
 #        Parallel(n_jobs=multiprocessing.cpu_count())(
 #            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
 #            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
+
+

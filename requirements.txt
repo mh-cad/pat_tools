@@ -8,3 +8,4 @@ setuptools
 imageio
 joblib
 scikit-image
+scikit-learn
