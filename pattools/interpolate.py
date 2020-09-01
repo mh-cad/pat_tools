@@ -3,6 +3,7 @@ from datetime import date, timedelta, datetime
 import nibabel as nib
 import numpy as np
 import imageio
+from PIL import Image
 from joblib import Parallel, delayed
 import multiprocessing
 
@@ -158,7 +159,7 @@ class Renderer:
                 if fm.filter_name == filter.name])
         return files
 
-    def render(self, timeline, path, overwrite=True):
+    def render(self, timeline, path, overwrite=True, output_type='gray16'):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
         print('timeline.path', timeline.path)
         print('timeline.whitematter_mask', timeline.whitematter_mask)
@@ -177,58 +178,98 @@ class Renderer:
                 os.path.join(path, filter.name), 
                 timeline.study_dates(), 
                 whitematter_mask_path=whitematter_mask_path,
-                overwrite=overwrite)
+                overwrite=overwrite,
+                output_type=output_type)
 
-    def render_new_studies(self, timeline, path):
+    def render_new_studies(self, timeline, path, output_type='gray16'):
         '''Write images to path given based on a timeline. Files will be interpolated and rendered to <path>/<filter>/<cor|sag|ax>/<date>/'''
-        self.render(timeline, path, overwrite=False)
+        self.render(timeline, path, overwrite=False, output_type=output_type)
 
     @staticmethod
-    def write_images(data, folder, slice_type, min_val, max_val):
+    def write_images(data, folder, slice_type, min_val, max_val, image_mode='gray16-rgbstuffed'):
+        print('writing images...')
         if not os.path.exists(folder):
             os.makedirs(folder, mode=0o777)
-        #data_cp = np.copy(data)
+
         data_cp = np.flip(data, 0)
         count = 0
         if slice_type == 'sag':
             count = data.shape[0]
             for i in range(data.shape[0]):
-                Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f'{i}.png'), min_val, max_val)
+                Renderer.write_image(data_cp[i,:,:], os.path.join(folder, f'{i}.png'), min_val, max_val, image_mode)
 
         elif slice_type == 'cor':
             count = data.shape[1]
             for j in range(data.shape[1]):
-                Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f'{j}.png'), min_val, max_val)
+                Renderer.write_image(data_cp[:,j,:], os.path.join(folder, f'{j}.png'), min_val, max_val, image_mode)
 
         elif slice_type == 'ax':
             count = data.shape[2]
             for k in range(data.shape[2]):
-                Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f'{k}.png'), min_val, max_val)
+                Renderer.write_image(data_cp[:,:,k], os.path.join(folder, f'{k}.png'), min_val, max_val, image_mode)
 
         return count
 
     @staticmethod
-    def write_image(slice, location, min, max):
+    def write_image(slice, location, min, max, mode='gray8'):
         '''Write a single slice to an image at the given location'''
-        # This is a bit of a hack to make sure the range is normal
-        slice[0,0] = max
-        slice[0,1] = min
-        output = np.flip(slice.T).copy()
-        #np.clip(output, min, max)
-        imageio.imwrite(location, output)
+        if mode == 'gray16':
+            Renderer.write_grayscale16_image(slice, location, min, max)
+        elif mode == 'gray8':
+            Renderer.write_grayscale8_image(slice, location, min, max)
+        elif mode == 'gray16-rgbstuffed':
+            Renderer.write_grayscale16_rgbstuffed_image(slice, location, min, max)
 
     @staticmethod
-    def _render_volume(date, volume, path, overwrite=True, whitematter_mask=1):
+    def write_grayscale16_image(slice, location, min, max):
+        '''Write a single slice to an image at the given location as 16bit greyscale'''
+        # For non background slices we want to normalize the range to fit in uint16
+        output = np.flip(slice.T).copy()
+        if max > 0:
+            output = output / max
+            output *= np.iinfo(np.uint16).max
+        output = output.astype(np.uint16)
+        Image.fromarray(output).save(location)
+
+    @staticmethod
+    def write_grayscale16_rgbstuffed_image(slice, location, min, max):
+        '''This will preserve the 16 bits of data to allow for windowing, but will output a standard RGB image.
+        This method allows using standard libraries that expect RGB without losing data, but will need to be
+        processed and windowed before output'''
+        # For non background slices we want to normalize the range to fit in uint16
+        output = np.flip(slice.T).copy()
+        if max > 0:
+            output = output / max
+            output *= np.iinfo(np.uint16).max
+        output = output.astype(np.uint16)
+
+        rgbout = np.zeros((output.shape[0], output.shape[1], 3), np.uint8)
+        rgbout[:,:,1] = (output >> 8).astype(np.uint8)
+        
+        rgbout[:,:,2] = (output - (rgbout[:,:,1] << 8)).astype(np.uint8)
+        Image.fromarray(rgbout).save(location)
+
+    @staticmethod
+    def write_grayscale8_image(slice, location, min, max):
+        '''Write a single slice to an image at the given location as 16bit greyscale'''
+        # For non background slices we want to normalize the range to fit in uint16
+        output = np.flip(slice.T).copy()
+        if max > 0:
+            output = output / max
+            output *= np.iinfo(np.uint8).max
+        output = output.astype(np.uint8)
+        Image.fromarray(output).save(location)
+
+    @staticmethod
+    def _render_volume(date, volume, path, overwrite=True, whitematter_mask=1, output_type='gray16'):
         '''Render every slice in a volume along 3 axis.'''
         # Set the min to be 0
-        print('np.amin(volume)', np.amin(volume))
         volume = volume - np.amin(volume)
         # Make sure the curve falls between 0 and 400
         max_val = np.amax(volume)
-        print('max_val', max_val)
-        if max_val > 255:
-            volume = volume / max_val * 255
-        volume = volume.astype(np.uint8)
+        #if max_val > 255:
+        #    volume = volume / max_val * 255
+        #volume = volume.astype(np.uint8)
 
         # Output paths
         sag_path = os.path.join(path, date.strftime('%Y%m%d'), 'sag')
@@ -236,13 +277,13 @@ class Renderer:
         ax_path = os.path.join(path, date.strftime('%Y%m%d'), 'ax')
         # Write images if the folder doesn't exist or overwrite is true
         if overwrite or os.path.exists(sag_path) == False:
-            Renderer.write_images(volume, sag_path, 'sag', 0, 255)
+            Renderer.write_images(volume, sag_path, 'sag', 0, max_val)
         if overwrite or os.path.exists(cor_path) == False:
-            Renderer.write_images(volume, cor_path, 'cor', 0, 255)
+            Renderer.write_images(volume, cor_path, 'cor', 0, max_val)
         if overwrite or os.path.exists(ax_path) == False:
-            Renderer.write_images(volume, ax_path, 'ax', 0, 255)
+            Renderer.write_images(volume, ax_path, 'ax', 0, max_val)
 
-    def render_all(self, files, mask_path, path, dates, whitematter_mask_path=None, overwrite=True):
+    def render_all(self, files, mask_path, path, dates, whitematter_mask_path=None, overwrite=True, output_type='gray16'):
         # Load the whitematter mask to use (or use 1, i.e. no mask if none is found)
         whitematter_mask = 1
         print('??whitematter_mask_path', whitematter_mask_path)
@@ -251,11 +292,12 @@ class Renderer:
 
         '''Render all volumes using supplied brain mask'''
         Parallel(n_jobs=multiprocessing.cpu_count())(
-            delayed(Renderer._render_volume)(date, volume, path, overwrite=overwrite, whitematter_mask=whitematter_mask)
+            delayed(Renderer._render_volume)(date, volume, path, overwrite=overwrite, whitematter_mask=whitematter_mask, output_type=output_type)
             for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
 
     def render_new(self, files, mask_path, path, dates,  whitematter_mask_path=None):
-        self.render_all(files, mask_path, path, dates, whitematter_mask_path=whitematter_mask_path, overwrite=False)
+        self.render_all(files, mask_path, path, dates, whitematter_mask_path=whitematter_mask_path, overwrite=False, output_type=output_type)
+
 
 #class VisTarsierRenderer(Renderer):
 #    def render_all(self, files, mask_path, path, dates, whitematter_mask_path=None, overwrite=True):

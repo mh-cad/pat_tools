@@ -1,5 +1,5 @@
 import unittest
-from interpolate import LinearInterpolator, _AbstractInterpolator
+from interpolate import LinearInterpolator, _AbstractInterpolator, Renderer
 import numpy as np
 import nibabel as nib 
 import os
@@ -95,7 +95,10 @@ class TestInterpolation(unittest.TestCase):
 
             self.assertGreater(data[1][1], 1)
             self.assertLess(data[1][1], 2)
-
+    
+    def test_renderer(self):
+        img = np.arange(0,64**2).reshape((64,64))
+        Renderer.write_image(img, 'test.png', 0, 64**2)
 
 if __name__ == '__main__':
     unittest.main()
