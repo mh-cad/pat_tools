@@ -183,6 +183,15 @@ def normalize_by_whitematter(img, ref_img, white_matter_mask):
 
     return normed_img
 
+def estimate_window(data: np.ndarray):
+    '''Estimates a viewing window based on the given numpy array. Just using mean and std but it's a start'''
+    wl = np.mean(data[data > 20])
+    ww = 3 * np.std(data[data > 20])
+    
+    if wl == np.nan or wl == np.Infinity: wl = 0
+    if ww == np.nan or ww == np.Infinity: ww = 0
+    return (wl, ww)
+
 # This function was stolen from a numpy cookbook and provides smoothing as is 
 # extrememly well commented (and then expressed through some very dense code with single letter vars). 
 def smooth(x, window_len=11, window='hanning'):
