@@ -2,7 +2,7 @@
 
 from pattools.pacs import Series, Patient
 from pattools.resources import Atlas
-from pattools.image import histogram_match, normalize_by_whitematter
+from pattools.image import histogram_match, normalize_by_whitematter, estimate_window
 import nibabel as nib
 import numpy as np
 import json
@@ -81,6 +81,7 @@ class Timeline:
     #^^ for now we'll try to use the file system to guide us
     manual_studies = None #This is a collection of studies which have been manually set to override the autmated matching.
     filters = None #Types of scans to include (defaut FLAIR and MPRAGE)
+    normed_window_map = None
 
     def __init__(self, path, patient_id=None):
         self.path = os.path.abspath(path)
@@ -100,7 +101,7 @@ class Timeline:
         self.datamap = {}
         self.manual_studies = {}
         self.filters = pattools._timelinefilter.default_filters()
-
+        self.normed_window_map = {}
         self.save()
 
     def clean(self):
@@ -233,6 +234,10 @@ class Timeline:
 
     def load(self):
         '''Load from disk'''
+        if not os.path.exists(os.path.join(self.path, 'timeline.metadata')):
+            print('No metadata file exists in ', os.path.join(self.path, 'timeline.metadata'))
+            return
+
         with open(os.path.join(self.path, 'timeline.metadata'), 'r') as f:
             content = f.read()
             path = self.path
@@ -382,7 +387,7 @@ class Timeline:
             output = nib.Nifti1Image(outdata, output.affine, output.header)
             nib.save(output, file)
 
-    def normalize_data(self, filter_name, brain_mask=True, do_znorm=True, do_histogram_match=True):
+    def normalize_data(self, filter_name, brain_mask=True, do_znorm=True, do_histogram_match=False):
         '''This will generate a slice-wise normalized set of data (which you'll need to fit in RAM)'''
         print('Normalizing data for filter', filter_name)
         
@@ -413,7 +418,9 @@ class Timeline:
 
         # Background threshold for Z-Norm
         background_threshold = 20
+        print('processing', output.shape[0], 'slices')
         for slice_index in range(output.shape[0]):
+            print('       ', slice_index, '/', output.shape[0])
             # We're going to take the most recent study as our reference
             bg_mask = output[slice_index,-1,:,:] > background_threshold
             # Skip the background only slices.
@@ -421,21 +428,43 @@ class Timeline:
                 continue
             mean0 = np.mean(output[slice_index,-1,:,:][bg_mask])
             std0 = np.std(output[slice_index,-1,:,:][bg_mask])
+            if mean0 == 0 or std0 == 0:
+                continue
             for i in range(0, output.shape[1]): # Where i is the study index
                 bg_mask = output[slice_index,i,:,:] > background_threshold
+                if (np.sum(bg_mask.astype(float)) <= 0):
+                    continue
                 sliceI = output[slice_index,i,:,:]
                 if len(sliceI) != 0:
                     meanI = np.mean(output[slice_index,i,:,:][bg_mask])
                     stdI = np.std(output[slice_index,i,:,:][bg_mask])
+                    if meanI == 0 or stdI == 0:
+                        continue
                     # Apply Z-Norm and Histogram Matching
-                    if do_znorm: 
-                        output[slice_index,i,:,:] = (output[slice_index,i,:,:] - meanI) / stdI * std0 + mean0
                     if do_histogram_match:
                         output[slice_index,i,:,:] = histogram_match(output[slice_index,i,:,:], output[slice_index,0,:,:])
+                    if do_znorm: 
+                        output[slice_index,i,:,:] = (output[slice_index,i,:,:] - meanI) / stdI * std0 + mean0
 
+        # Make sure the minimum is zero (so we don't get grey backgrounds)
+        output = output - np.min(output)
+        print('max, min:', np.max(output), ",", np.min(output))
         for i, f in enumerate(files):
             img = nib.load(f)
-            nib.save(nib.Nifti1Image(output[:,i,:,:], img.affine, img.header), f)
+            nib.save(nib.Nifti1Image(output[:,i,:,:] * mask, img.affine, img.header), f)
+
+        # TODO, this should probably be moved to the renderer
+        wl, ww  = estimate_window(output) # Window level, and window width are the convention
+        min_val = np.min(output)
+        max_val = np.max(output)
+        if min_val == np.nan: min_val = 0
+        if max_val == np.nan: max_val = 0
+        self.normed_window_map[filter_name] = {'min':min_val, 'max':max_val, 'ww': ww, 'wl': wl}
+        for k in self.normed_window_map[filter_name].keys():
+            if self.normed_window_map[filter_name][k] == np.NaN or self.normed_window_map[filter_name][k] == np.Infinity:
+                self.normed_window_map[filter_name][k] = 0
+        print(self.normed_window_map)
+        self.save()
 
     def process(self):
         '''Process (bias correct, register to reference, etc.) all image files'''
