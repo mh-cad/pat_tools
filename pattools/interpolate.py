@@ -225,9 +225,6 @@ class Renderer:
         '''Write a single slice to an image at the given location as 16bit greyscale'''
         # For non background slices we want to normalize the range to fit in uint16
         output = np.flip(slice.T).copy()
-        if max > 0:
-            output = output / max
-            output *= np.iinfo(np.uint16).max
         output = output.astype(np.uint16)
         Image.fromarray(output).save(location)
 
@@ -238,9 +235,6 @@ class Renderer:
         processed and windowed before output'''
         # For non background slices we want to normalize the range to fit in uint16
         output = np.flip(slice.T).copy()
-        if max > 0:
-            output = output / max
-            output *= np.iinfo(np.uint16).max
         output = output.astype(np.uint16)
 
         rgbout = np.zeros((output.shape[0], output.shape[1], 3), np.uint8)
@@ -254,9 +248,6 @@ class Renderer:
         '''Write a single slice to an image at the given location as 16bit greyscale'''
         # For non background slices we want to normalize the range to fit in uint16
         output = np.flip(slice.T).copy()
-        if max > 0:
-            output = output / max
-            output *= np.iinfo(np.uint8).max
         output = output.astype(np.uint8)
         Image.fromarray(output).save(location)
 

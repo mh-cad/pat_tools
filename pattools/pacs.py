@@ -371,9 +371,12 @@ class Patient:
         self.scp_settings = scp_settings
         if id != None and scp_settings !=None:
             patient = Patient.from_id(id, scp_settings)
-            self.name = patient.name
-            self.dob = patient.dob
-            self.patient_sex = patient.patient_sex
+            if patient != None:
+                self.name = patient.name
+                self.dob = patient.dob
+                self.patient_sex = patient.patient_sex
+            else:
+                print(f'Patient #{id} was not found in SCP')
 
     def __str__(self):
         return (
@@ -399,6 +402,8 @@ class Patient:
         results = cfind(scp_settings, ds)
         if len(results) > 0:
             return Patient.parse_result(results[0], scp_settings)
+        else:
+            return None
 
     @staticmethod
     def parse_result(result, scp_settings):

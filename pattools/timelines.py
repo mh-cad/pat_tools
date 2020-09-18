@@ -448,11 +448,15 @@ class Timeline:
 
         # Make sure the minimum is zero (so we don't get grey backgrounds)
         output = output - np.min(output)
+        # Norm the data to full uint16 range (this makes export way easier)
+        output = output / np.max(output) * np.iinfo(np.uint16).max
+        #output = output.astype(np.uint16)
+        # Export the data
         print('max, min:', np.max(output), ",", np.min(output))
         for i, f in enumerate(files):
             img = nib.load(f)
             nib.save(nib.Nifti1Image(output[:,i,:,:] * mask, img.affine, img.header), f)
-
+        
         # TODO, this should probably be moved to the renderer
         wl, ww  = estimate_window(output) # Window level, and window width are the convention
         min_val = np.min(output)
