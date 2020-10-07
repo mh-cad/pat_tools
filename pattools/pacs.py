@@ -586,6 +586,7 @@ class Report(Series):
     verification_flag = None
     type = None
     text = None
+    json_string = None
 
     def __init__(self, dataset=None, study=None):
             self.study = study
@@ -599,7 +600,9 @@ class Report(Series):
                 self.completion_flag = dataset.CompletionFlag
                 self.verification_flag = dataset.VerificationFlag
                 self.type = dataset.ContentSequence[0].ValueType
-                self.text = dataset.ContentSequence[0].TextValue
+                # Sometimes they're a zip file or something and that's a big fat TODO
+                self.json_string = dataset.to_json()
+
 
     def __str__(self):
         return (
@@ -613,7 +616,8 @@ class Report(Series):
             'completion_flag  : ' + str(self.completion_flag)+ '\n' +
             'verification_flag: ' + str(self.verification_flag)+ '\n' +
             'type             : ' + str(self.type)+ '\n' +
-            'text             : ' + str(self.text))
+            'text             : ' + str(self.text)+ '\n' +
+            'json_string      : ' + str(self.json_string))
 
     @staticmethod
     def parse_result(result):

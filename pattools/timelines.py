@@ -314,7 +314,6 @@ class Timeline:
             t2_path = os.path.join(tmp_dir, 't2.nii.gz')
             mask_path = os.path.join(tmp_dir, 'mask.nii.gz')
             whitematter_mask_path = os.path.join(tmp_dir, 'whitematter_mask.nii.gz')
-
             nib.save(atlas.t2, t2_path)
             nib.save(atlas.mask, mask_path)
             nib.save(atlas.whitematter_mask, whitematter_mask_path)
@@ -341,7 +340,6 @@ class Timeline:
             ants.apply_transform(mask_path, n4_path, affine_mat, out_path).wait()
             white_out_path = os.path.join(self.path, 'whitematter_mask.nii.gz')
             ants.apply_transform(whitematter_mask_path, n4_path, affine_mat, white_out_path).wait()
-
             # Save metadata
             self.registration_reference = 'registration_reference.nii.gz'
             self.brain_mask = 'brain_mask.nii.gz'
@@ -390,8 +388,8 @@ class Timeline:
     def normalize_data(self, filter_name, brain_mask=True, do_znorm=True, do_histogram_match=False):
         '''This will generate a slice-wise normalized set of data (which you'll need to fit in RAM)'''
         print('Normalizing data for filter', filter_name)
-        
-        mask = nib.load(os.path.join(self.path, self.brain_mask)).get_fdata() if brain_mask else 1.
+
+        mask = nib.load(os.path.join(self.path, self.brain_mask)).get_fdata() if brain_mask and self.brain_mask != None else 1.
         files = [
             os.path.join(self.path, fm.study_date, fm.processed_file)
             for fm in self.files_for_filter(filter_name)]
@@ -484,21 +482,21 @@ class Timeline:
         histogram_references = {}
         # TODO -- We seem to be selecting the most recent study as the histogram match
         # this will break on update
-        for filter in self.filters:
-            histogram_ref_path = os.path.join(self.path, f'intensity_ref_{filter.name}.nii.gz')
-            if not os.path.exists(histogram_ref_path):
-                candidate_path = ""
-                for study_date in self.datamap:
-                    for fm in self.datamap[study_date]:
-                        if fm.filter_name == filter.name:
-                            candidate_path = os.path.join(self.path, study_date, fm.processed_file)
-                            if not os.path.exists(candidate_path):
-                                candidate_path = os.path.join(self.path, study_date, fm.file)
-                try:
-                    shutil.copyfile(candidate_path, histogram_ref_path)
-                except:
-                    print('Failed to copy histogram reference ', candidate_path)
-            histogram_references[filter.name] = histogram_ref_path
+        #for filter in self.filters:
+            #histogram_ref_path = os.path.join(self.path, f'intensity_ref_{filter.name}.nii.gz')
+            #if not os.path.exists(histogram_ref_path):
+            #    candidate_path = ""
+            #    for study_date in self.datamap:
+            #        for fm in self.datamap[study_date]:
+            #            if fm.filter_name == filter.name:
+            #                candidate_path = os.path.join(self.path, study_date, fm.processed_file)
+            #                if not os.path.exists(candidate_path):
+            #                    candidate_path = os.path.join(self.path, study_date, fm.file)
+            #    try:
+            #        shutil.copyfile(candidate_path, histogram_ref_path)
+            #    except:
+            #        print('Failed to copy histogram reference ', candidate_path)
+            #histogram_references[filter.name] = histogram_ref_path
 
         for study in self.datamap:
             study_path = os.path.join(self.path, study)
@@ -508,11 +506,11 @@ class Timeline:
                     input = os.path.join(self.path, study, filemeta.file)
                     output = os.path.join(self.path, study, filemeta.processed_file)
                     filter_name = filemeta.filter_name
-                    files_to_process.append((input, output, histogram_references[filter_name]))
+                    files_to_process.append((input, output))
         # Add a progress bar
         print('Processing', len(files_to_process), 'files...')
         files_to_process = progress.bar(files_to_process, expected_size=len(files_to_process))
-        for input, output, _ in files_to_process: # TODO: Discarding histogram_reference
+        for input, output in files_to_process: # TODO: Discarding histogram_reference
             self.process_file(input, output)
 
         # Now that all the files are processed (including the histogram references) we can normalize

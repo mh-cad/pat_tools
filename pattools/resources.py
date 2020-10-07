@@ -81,7 +81,7 @@ class Atlas:
                         if info.filename == 'mni_icbm152_wm_tal_nlin_asym_09c/mni_icbm152_wm_tal_nlin_asym_09c.nii':
                             info.filename = 'mni_icbm152_wm_tal_nlin_asym_09c.nii'
                             z.extract(info, target_dir)
-
+            
             # Take a crack at downloading if we can't find a file
             if (t1_path == None or t2_path == None or mask_path == None or whitematter_path == None) and download_if_not_found:
                 return self.download(target_dir)
