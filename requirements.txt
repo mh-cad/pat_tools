@@ -9,3 +9,5 @@ imageio
 joblib
 scikit-image
 scikit-learn
+h5py
+numpy
