@@ -42,5 +42,3 @@ COPY ./*.cfg /pattools/
 COPY ./README.md /pattools/
 
 RUN python3 setup.py install
-
-CMD python3
