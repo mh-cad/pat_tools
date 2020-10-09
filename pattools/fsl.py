@@ -1,4 +1,6 @@
 import os
+import subprocess
+
 FSLPATH = ''
 if 'FSLPATH' not in os.environ:
     print('***************** OH NO! ********************')
@@ -8,3 +10,7 @@ if 'FSLPATH' not in os.environ:
     print('***************** /OH NO! *******************')
 else:
     FSLPATH = os.environ['FSLPATH']
+
+def bet(input, output):
+    betpath = os.path.join(FSLPATH, 'fsl5.0-bet')
+    return subprocess.Popen([betpath, input, output, '-f','0.4','-R'])
