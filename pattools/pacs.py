@@ -255,6 +255,32 @@ def cfind(scp_settings, dataset, query_model='P'):
     else:
         raise ConnectionError('Association rejected, aborted or never connected ' + scp_settings.ae_title)
 
+def cstore(scp_settings, dataset):
+    ''' Make a CFIND request '''
+    # Initialise the Application Entity
+    ae = AE()
+    # Add a requested presentation context
+    ae.add_requested_context(CTImageStorage)
+    ae.add_requested_context(EnhancedCTImageStorage)
+    ae.add_requested_context(MRImageStorage)
+    ae.add_requested_context(MRSpectroscopyStorage)
+    ae.add_requested_context(EnhancedMRColorImageStorage)
+    # Create association to scp
+    assoc = ae.associate(
+        scp_settings.host, scp_settings.port, ae_title=scp_settings.ae_title)
+    # Store the image
+    if assoc.is_established:
+        status = assoc.send_c_store(ds)
+        if status:
+            pass
+        else:
+            raise TimeoutError('Connection timed out, was aborted or received invalid response ' + scp_settings.ae_title)
+
+        assoc.release()
+    else:
+        raise ConnectionError('Association rejected, aborted or never connected ' + scp_settings.ae_title)
+
+
 def find_studies_from_patient(patient):
     '''Runs a CFIND for all studies for a given patient'''
     ds = Dataset()
@@ -305,6 +331,9 @@ def find_series_from_study(study):
         if seri != None: series.append(seri)
 
     return series
+
+
+
 
 #def find_studies(scp_settings, patient_name = '', patient_id = '' ,study_uid = '',
 #    accession_number = '', modalities_in_study = '', study_date = '',
@@ -573,6 +602,17 @@ class Series:
             elif field.startswith('(0008, 0020)'):
                 series.study_date = field.split(': ')[-1].strip("'").strip('"')
         return series
+
+    @staticmethod
+    def from_series_uid(uid, scp_settings):
+        '''Get a series from the unique idenifier string'''
+        ds = Dataset()
+        ds.SeriesUID = uid
+        ds.QueryRetrieveLevel = 'SERIES'
+        results = cfind(scp_settings, ds, query_model='S')
+        if len(results) == 0:
+            return None
+        return Series.parse_result(results[0])
 
 class Report(Series):
     '''This class represents a study report'''
