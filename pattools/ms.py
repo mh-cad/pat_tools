@@ -7,9 +7,9 @@ import os
 import subprocess
 import numpy as np
 
-def latest_flair_pair(patient_id, scp_settings, tmp_dir):
+def latest_flair_pair(patient_id, scp_settings):
     ''' Get the 2 most recent FLAIR studies for a patient. Returns None if we can't find 2 studies'''
-    p = Patient(os.path.join(tmp_dir, patient_id), scp_settings=scp_settings)
+    p = Patient(patient_id, scp_settings=scp_settings)
     studies = p.find_studies()
     studies.sort(key=lambda s: s.study_date, reverse=True)
     fil = flair_filter()
