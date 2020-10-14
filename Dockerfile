@@ -33,6 +33,9 @@ RUN cd ~/bin/antsBuild/ \
     && make -j4
 RUN mv ~/bin/antsBuild/bin $ANTSPATH
 
+RUN apt-get update && apt-get install fsl -y
+ENV FSLPATH="/usr/bin" 
+
 COPY ./requirements.txt /pattools/requirements.txt
 WORKDIR /pattools
 RUN pip3 install -r requirements.txt --src /usr/local/src
