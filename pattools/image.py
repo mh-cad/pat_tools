@@ -1,5 +1,6 @@
 from skimage.exposure import match_histograms
 from sklearn.mixture import GaussianMixture
+from scipy import interpolate
 import numpy as np
 
 def histogram_match(image, reference):
@@ -236,3 +237,18 @@ def smooth(x, window_len=11, window='hanning'):
         w=eval('np.'+window+'(window_len)')
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
+	
+def m_mode(img, start_point, end_point, out_size=100):
+    ''' This function produces an interpolated 1-D view of the line between 2 points '''
+    if len(img.shape) != 3:
+        raise ValueError('m_mode only works on 3D volumes')
+    # This will give us the points in real numbers
+    xs = np.linspace(start_point[0], end_point[0], out_size)
+    ys = np.linspace(start_point[1], end_point[1], out_size)
+    zs = np.linspace(start_point[2], end_point[2], out_size)
+
+    # This will give us the grid points for the data (ugly but i.shape[1] w + list(range(img.shape[2]o))rks)
+    points = [list(range(img.shape[0])), list(range(img.shape[1])), list(range(img.shape[2]))]
+    outdata = interpolate.interpn(points, img, (xs,ys,zs))
+
+    return outdata

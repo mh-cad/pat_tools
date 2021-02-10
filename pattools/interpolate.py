@@ -6,6 +6,7 @@ import imageio
 from PIL import Image
 from joblib import Parallel, delayed
 import multiprocessing
+from pattools.image import m_mode
 
  #############################
 ######## INTERPOLATORS ########
@@ -303,4 +304,91 @@ class Renderer:
 #            delayed(Renderer._render_volume)(date, volume, path, overwrite=True)
 #            for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
 
+class MMode():
+    ''' M Mode renders a 2D view of the 4D timeline data between two spatial points (i.e. a line through time)'''
+    timeline = None
+    _start = None
+    _end = None
+    _lines = None
+    
+    def __init__(self, timeline, start, end):
+        ''' M Mode renderer requires a timeline, start point and end point'''
+        self.timeline = timeline
+        timeline._load_datamap()
+        self._start = start
+        self._end = end
 
+    def _calculate_lines(self, height=100):
+        ''' This will give us a bunch of 1D lines, one for each scan in the timeline. '''
+        if self._start == None or self._end == None:
+            raise ValueError('Start and end points cannot be None')
+        
+        self._lines = {}
+        for studydate in self.timeline.datamap:
+            for fm in self.timeline.datamap[studydate]:
+                path = os.path.join(self.timeline.path, studydate, fm.processed_file)
+                try:
+                    img = nib.load(path).get_fdata()
+                    line = m_mode(img, self._start, self._end, out_size=height)
+                    if fm.filter_name not in self._lines:
+                        self._lines[fm.filter_name] = {}
+                    self._lines[fm.filter_name][studydate] = line
+                except Exception as e:
+                    print(f'Something went wrong with {fm.filter_name}/{studydate}')
+                    print(e)
+
+    def _parse_date(self, date_time_str):
+        ''' Converts a timeline date into a timeline for norming. '''
+        return datetime.strptime(date_time_str, '%Y%m%d').timestamp()
+
+    def render(self, filter_name, outfile=None, line_width=5, width=400, height=100):
+        ''' This function will render a 2D view of a given filter to the outfile.
+            Background will be black in an image defined by height and width.
+            Return value is a list of dictionaries with normed dates and line values. '''
+        # Calculate the lines as needed
+        if self._lines == None or len(self._lines.keys()) == 0 or self._lines[next(self._lines.keys())].shape[1] != height:
+            self._calculate_lines(height)
+                
+        # Check input
+        if self._lines == None or self._start == None or self._end == None:
+            raise ValueError('Points have not been set correctly')
+        if filter_name not in self._lines or len(self._lines[filter_name].keys()) == 0:
+            raise ValueError("Filter doesn't seem to exist")
+        
+        lines = self._lines[filter_name]
+        
+        outdata = np.zeros((width, height))
+        dates = []
+        
+        # Parse the date values
+        max_date = float('-inf')
+        min_date = float('inf')
+        for date_string in lines.keys():
+            d = self._parse_date(date_string)
+            dates.append({'date_string':date_string, 'date':d, 'line':lines[date_string]})
+            min_date = min(min_date, d)
+            max_date = max(max_date, d)
+        
+        # Write the line to the output image
+        max_date -= min_date
+        for ddict in dates:
+            normed_date = (ddict['date'] - min_date) / max_date
+            index = int(normed_date * (width-line_width))
+            for i in range(line_width):
+                if index+i < outdata.shape[0] and index+1 >= 0:
+                    outdata[index+i,:] = ddict['line']
+        
+        # Write out file
+        if outfile != None:
+            # Norm data to 16bit signed int
+            outdata -= np.min(outdata)
+            maxval = np.max(outdata)
+            if maxval != 0:
+                outdata /= maxval
+                outdata *= 255
+            
+            outimg = Image.fromarray(outdata.T.astype(np.uint8), mode='L')#, mode='I;16')
+            outimg.save(outfile)
+            print(np.array(outimg))
+
+        return dates
