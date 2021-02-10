@@ -39,6 +39,9 @@ class _AbstractInterpolator:
         
 
     def interpolated_data_from_dates(self, image_paths, mask_path, dates):
+        '''This method will interpolate data for every data given in dates.
+        The method will assume the image paths are formatted within a Timeline (so the date
+        for each image can be extracted via the _AbstractInterpolator._date_from_path method.'''
         study_dates = [_AbstractInterpolator._date_from_path(p) for p in image_paths]
         mask_data = None
         if mask_path != None and os.path.exists(mask_path):
@@ -52,6 +55,8 @@ class _AbstractInterpolator:
             yield d, d2
 
     def interpolated_data_from_delta(self, image_paths, mask_path, delta_days):
+        ''' This method will interpolate data based on images with a time between returned images
+        that is delta_days days'''
         ''' Returns a list of numpy volumes interpolated based on the delta days. All real scans are included.'''
         all_dates = _AbstractInterpolator.interpolated_dates([_AbstractInterpolator._date_from_path(p) for p in image_paths], delta_days)
         return self.interpolated_data_from_dates(image_paths, mask_path, all_dates)
