@@ -341,6 +341,7 @@ class MMode():
         ''' Converts a timeline date into a timeline for norming. '''
         return datetime.strptime(date_time_str, '%Y%m%d').timestamp()
 
+    # TODO: This function is trying to do two things (output the file and return the dict), they should be separated.
     def render(self, filter_name, outfile=None, line_width=5, width=400, height=100):
         ''' This function will render a 2D view of a given filter to the outfile.
             Background will be black in an image defined by height and width.
