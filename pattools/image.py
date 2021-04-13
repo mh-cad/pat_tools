@@ -250,5 +250,15 @@ def m_mode(img, start_point, end_point, out_size=100):
     # This will give us the grid points for the data (ugly but i.shape[1] w + list(range(img.shape[2]o))rks)
     points = [list(range(img.shape[0])), list(range(img.shape[1])), list(range(img.shape[2]))]
     outdata = interpolate.interpn(points, img, (xs,ys,zs))
-
     return outdata
+
+def rgbstuffed_to_16bit(rbgstuffed_array):
+    sixteenbit_out = np.zeros((rbgstuffed_array.shape[0], rbgstuffed_array.shape[1]), np.uint16)
+    sixteenbit_out[:,:] = (rbgstuffed_array[:,:,1] << 8).astype(np.uint16) + rbgstuffed_array[:,:,2]
+    return sixteenbit_out
+
+def sixteenbit_to_rgbstuffed(sixteenbit_array):
+    rgbout = np.zeros((sixteenbit_array.shape[0], sixteenbit_array.shape[1], 3), np.uint8)
+    rgbout[:,:,1] = (sixteenbit_array >> 8).astype(np.uint8)
+    rgbout[:,:,2] = (sixteenbit_array - (rgbout[:,:,1] << 8)).astype(np.uint8)
+    return rgbout

@@ -292,7 +292,7 @@ class Renderer:
             delayed(Renderer._render_volume)(date, volume, path, overwrite=overwrite, whitematter_mask=whitematter_mask, output_type=output_type)
             for date, volume in self.interpolator.interpolated_data_from_dates(files, mask_path, dates))
 
-    def render_new(self, files, mask_path, path, dates,  whitematter_mask_path=None):
+    def render_new(self, files, mask_path, path, dates,  whitematter_mask_path=None, output_type='gray16'):
         self.render_all(files, mask_path, path, dates, whitematter_mask_path=whitematter_mask_path, overwrite=False, output_type=output_type)
 
 
@@ -329,6 +329,14 @@ class MMode():
                 path = os.path.join(self.timeline.path, studydate, fm.processed_file)
                 try:
                     img = nib.load(path).get_fdata()
+           
+                    #resolve negative indexing (a little wasteful to do it inside the loop but we have an image shape and it's cheap)
+                    for i in range(3):
+                        if self._start[i] < 0:
+                            self._start[i] += img.shape[i]
+                        if self._end[i] < 0:
+                            self._end[i] += img.shape[i]
+                    # Calculate line         
                     line = m_mode(img, self._start, self._end, out_size=height)
                     if fm.filter_name not in self._lines:
                         self._lines[fm.filter_name] = {}
@@ -336,6 +344,7 @@ class MMode():
                 except Exception as e:
                     print(f'Something went wrong with {fm.filter_name}/{studydate}')
                     print(e)
+        return self._lines
 
     def _parse_date(self, date_time_str):
         ''' Converts a timeline date into a timeline for norming. '''
