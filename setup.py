@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pattools",
-    version="0.0.2",
+    version="0.1.3",
     author="plwp",
     author_email="pat@plwp.net",
     description="Toolkit for neuro-imaging data manipulation and automation",
@@ -21,7 +21,11 @@ setuptools.setup(
           'nibabel',
           'clint',
           'imageio',
-          'joblib'
+          'joblib',
+          'h5py',
+          'numpy',
+          'scikit-learn',
+          'scikit-image'
       ],
     classifiers=[
         "Programming Language :: Python :: 3",

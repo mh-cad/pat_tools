@@ -1,14 +1,16 @@
-from skimage.exposure import match_histograms
-from sklearn.mixture import GaussianMixture
-from scipy import interpolate
+import sys
 import numpy as np
 
 def histogram_match(image, reference):
+    if 'skimage.exposure' not in sys.modules:
+        from skimage.exposure import match_histograms
     '''Returns image modified to match reference's histogram'''
     return match_histograms(image, reference, multichannel=False)
 
 def _build_gaussian_mixture(data, n_components, random_sample=100000):
     '''Builds and fits a GaussianMixture from a random sample of the provided data'''
+    if 'skimage.mixture' not in sys.modules:
+        from sklearn.mixture import GaussianMixture
     gm = GaussianMixture(n_components=n_components, random_state=42069)
     rng = np.random.default_rng(42069) # We're seeding our RNG to make it deterministic
     gm.fit(rng.choice(data.reshape(-1), random_sample).reshape(-1,1))
@@ -205,9 +207,7 @@ def smooth(x, window_len=11, window='hanning'):
         x: the input signal 
         window_len: the dimension of the smoothing window; should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-            flat window will produce a moving average smoothing.
-    output:
-        the smoothed signal
+            flat window will produce a moving average smoothing.interpolate
     example:
     t=linspace(-2,2,0.1)
     x=sin(t)+randn(len(t))*0.1
@@ -240,6 +240,8 @@ def smooth(x, window_len=11, window='hanning'):
 	
 def m_mode(img, start_point, end_point, out_size=100):
     ''' This function produces an interpolated 1-D view of the line between 2 points '''
+    if 'scipy.interpolate' not in sys.modules:
+        import scipy.interpolate
     if len(img.shape) != 3:
         raise ValueError('m_mode only works on 3D volumes')
     # This will give us the points in real numbers
@@ -249,7 +251,7 @@ def m_mode(img, start_point, end_point, out_size=100):
 
     # This will give us the grid points for the data (ugly but i.shape[1] w + list(range(img.shape[2]o))rks)
     points = [list(range(img.shape[0])), list(range(img.shape[1])), list(range(img.shape[2]))]
-    outdata = interpolate.interpn(points, img, (xs,ys,zs))
+    outdata = scipy.interpolate.interpn(points, img, (xs,ys,zs))
     return outdata
 
 def rgbstuffed_to_16bit(rbgstuffed_array):

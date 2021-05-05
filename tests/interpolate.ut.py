@@ -1,5 +1,5 @@
 import unittest
-from interpolate import LinearInterpolator, _AbstractInterpolator, Renderer
+from pattools.interpolate import LinearInterpolator, _AbstractInterpolator, Renderer
 import numpy as np
 import nibabel as nib 
 import os
