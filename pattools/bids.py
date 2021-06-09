@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 import json
+import nibabel as nib
 
 SUBJECT_PREFIX = 'sub-'
 SESSION_PREFIX = 'ses-'
@@ -203,9 +204,9 @@ class GeneratedByDescription:
 
 class Subject:
     '''Represents a single subject within the dataset'''
-    path: str
-    label: str
-    parent: Dataset
+    path: str = None
+    label: str = None
+    parent: Dataset = None
 
     def __init__(self, path:str, parent:Dataset=None):
         self.path = path
@@ -229,9 +230,9 @@ class Subject:
 
 class Session:
     '''Represents a single session folder'''
-    path: str
-    label: str
-    parent: Subject
+    path: str = None
+    label: str = None
+    parent: Subject = None
 
     def __init__(self, path:str, parent:Subject=None):
         self.path = path
@@ -247,7 +248,8 @@ class Session:
     def modalities(self):
         '''Return all the modalities for this session'''
         _, folders, _ = next(os.walk(self.path))
-        [Modality(os.path.join(f, self.path), self) for f in folders if f in ModalityType.values()]
+        input = [(os.path.join(self.path, f), self) for f in folders if f in ModalityType.values()]
+        return [Modality(os.path.join(self.path, f), self) for f in folders if f in ModalityType.values()]
 
     def get_modality(self, modality_type: ModalityType):
         '''Return the modality based on type. May return None.'''
@@ -257,15 +259,49 @@ class Session:
         # TODO: There may be a better error here.
         return None
 
+class ScanFile:
+    path: str = None
+    parent = None
+    metadata_path: str = None
+
+    def __init__(self, path:str, parent=None):
+        self.path = path
+        self.parent = parent
+        if path.endswith('.nii.gz'):
+            core = path[:-7]
+        else:
+            core = os.path.splitext(path)[0]
+        self.metadata_path = core + '.json'
+
+    def read_metadata(self):
+        if os.path.exists(self.metadata_path):
+            with open(self.metadata_path, 'r') as f:
+                return json.load(f)
+
+    def write_metadata(self, dct:dict):
+        with open(self.metadata_path, 'w') as f:
+            json.dump(dct, f)
+        
+    def read_image(self):
+        return nib.load(self.path)
+
+    def write_image(self, img):
+        nib.save(img, self.path)
+
 class Modality:
-    path: str
-    parent: Session
-    modality_type: ModalityType
+    path: str = None
+    parent: Session = None
+    modality_type: ModalityType = None
 
     def __init__(self, path:str, parent:Session=None):
         self.path = path
         self.parent = parent
-        modality_type = ModalityType(path.split(self.path)[1])
+        modality_type = ModalityType(os.path.split(self.path)[1])
+
+    def scans(self):
+        _, _, files = next(os.walk(self.path))
+        return [ScanFile(os.path.join(self.path, f)) for f in files if f.endswith('.nii.gz') or f.endswith('.nii')]
+
 
 
 

@@ -41,7 +41,10 @@ class TestDataset(unittest.TestCase):
     def create_folders(self, tmpdir):
         os.makedirs(os.path.join(tmpdir, 'sub-01', 'ses-01', 'anat'))
         os.makedirs(os.path.join(tmpdir, 'sub-02', 'anat'))
-        
+        with open(os.path.join(tmpdir, 'sub-01', 'ses-01', 'anat', 'sub-01_ses-01_test2.nii'), 'w') as f:
+            f.write('totally real image')
+        with open(os.path.join(tmpdir, 'sub-02', 'anat','sub-02_test1.nii.gz'), 'w') as f:
+            f.write('totally real image')
 
     def test_read(self):
         with TemporaryDirectory() as tmpdir:
@@ -54,6 +57,13 @@ class TestDataset(unittest.TestCase):
             assert(subs[1].label == '02')
             assert(subs[0].sessions()[0].label == '01')
             assert(subs[1].sessions()[0].label == None)
+
+            scan1 = subs[0].sessions()[0].modalities()[0].scans()[0]
+            scan2 = subs[1].sessions()[0].modalities()[0].scans()[0]
+            scan1.write_metadata({'foo':'bar'})
+            assert(scan1.read_metadata()['foo'] == 'bar')
+
+            assert(scan1.path == os.path.join(tmpdir, 'sub-01', 'ses-01', 'anat', 'sub-01_ses-01_test2.nii'))
 
     def test_description(self):
         ddct = json.loads(self.test_data)
