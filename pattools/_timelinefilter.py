@@ -13,6 +13,8 @@ class Filter:
     min_rows = 100
     min_cols = 100
     threshold = 0
+    bids_type = '' # Bids type is a mapping to a valid bids prefix see:
+                   # https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html
 
     def __init__(self, name):
         self.name = name
@@ -43,6 +45,7 @@ class Filter:
 def flair_filter():
     '''Default filter for FLAIR studies'''
     filter = Filter('FLAIR')
+    filter.bids_type = 'anat/FLAIR'
     filter.scorecard.append(ScorecardElement('flair', 100))
     filter.scorecard.append(ScorecardElement('mprage', -100))
     filter.scorecard.append(ScorecardElement('localiser', -50))
@@ -64,6 +67,7 @@ def flair_filter():
 def mprage_cplus_filter():
     '''Default filter for MPRAGE c+ studies'''
     filter = Filter('MPRAGE_C+')
+    filter.bids_type = 'anat/T1w'
     filter.scorecard.append(ScorecardElement('mprage', 60))
     filter.scorecard.append(ScorecardElement('flair', -100))
     filter.scorecard.append(ScorecardElement('localiser', -50))
@@ -90,6 +94,7 @@ def mprage_cplus_filter():
 def mprage_cminus_filter():
     '''Default filter for MPRAGE C- studies'''
     filter = Filter('MPRAGE_C-')
+    filter.bids_type = 'anat/T1w'
     filter.scorecard.append(ScorecardElement('mprage', 100))
     filter.scorecard.append(ScorecardElement('flair', -100))
     filter.scorecard.append(ScorecardElement('localiser', -50))
